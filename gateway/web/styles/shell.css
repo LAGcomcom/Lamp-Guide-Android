@@ -1,0 +1,390 @@
+/* ==========================================================================
+   shell.css —— 窗口骨架：标题栏 / 左侧导航 / 内容区 / 页头。
+   全部数值来自 tokens.css；本文件不出现任何字面色值。
+   ========================================================================== */
+
+#app { height: 100vh; display: flex; flex-direction: column; }
+
+/* ---------------- 标题栏（40px，TitleBarControl.xaml:7） ---------------- */
+.titlebar {
+  height: var(--titlebar-h);
+  flex: 0 0 var(--titlebar-h);
+  display: flex;
+  align-items: flex-start;          /* Padding 16,10,0,0 */
+  padding: 10px 0 0 16px;
+  gap: 8px;                          /* Spacing 8 */
+  position: relative;
+  z-index: 1;                        /* ZIndex=1 压在导航之上 */
+  background: var(--bg);
+}
+.titlebar.is-blurred { color: var(--text-secondary); }
+
+/* 缩放热区的命中层：WebView2 铺满客户区，DWM 画的边框收不到鼠标，
+   所以由页面在四边四角各铺一条窄带，mousedown 时发起系统的缩放循环。
+   必须 fixed + 高层级：它是「屏幕边缘」的语义，不属于任何页面容器。 */
+.resize-grip {
+  position: fixed;
+  z-index: 2147483000;
+  -webkit-user-select: none;
+  user-select: none;
+}
+
+/* 拖动热区：整条标题栏可拖，按钮区域排除。
+   注意这里**不能**只靠 -webkit-app-region: drag —— 那是 Electron 的约定，
+   WebView2 不认；而原生 WM_NCHITTEST 也轮不到父窗口，因为 WebView2 的子窗口
+   铺满整个客户区并对每个点回 HTCLIENT。真正的拖动由 shell.js 在 mousedown 里
+   调 Window.StartDrag 发起系统移动循环。 */
+.titlebar-drag {
+  position: absolute;
+  inset: 0 184px 0 0;                /* 右侧让出主题与窗口按钮 */
+  cursor: default;
+}
+
+.tb-logo {
+  width: 20px; height: 20px;
+  flex: 0 0 20px;
+  color: var(--accent);
+  display: grid; place-items: center;
+}
+.tb-logo svg { width: 16px; height: 16px; display: block; }
+.tb-logo img { width: 20px; height: 20px; display: block; }
+
+.tb-title {
+  font-size: 12px;
+  line-height: 16px;
+  margin-top: 2px;                   /* Margin 0,0,0,2 */
+  color: var(--text-primary);
+  font-weight: var(--fw-normal);
+  white-space: nowrap;
+}
+
+/* 窗口按钮：46×32 与原生按钮同高（TitleBarControl.xaml:41-66） */
+.tb-buttons {
+  margin-left: auto;
+  display: flex;
+  height: 32px;
+  align-self: flex-start;
+  margin-top: -6px;                  /* 让 32 高的按钮在 40 高的条里垂直居中 */
+  position: relative;
+  z-index: 2;
+}
+.tb-btn {
+  width: 46px; height: 32px;
+  display: grid; place-items: center;
+  color: var(--text-primary);
+  transition: background-color var(--dur-fast) linear;
+}
+.tb-btn:hover { background: var(--fill-subtle-hover); }
+.tb-btn:active { background: var(--fill-subtle-pressed); }
+.tb-btn.is-close:hover { background: var(--critical); color: var(--on-critical); }
+.tb-btn.is-close:active { background: var(--critical-hover); color: var(--on-critical); }
+.tb-btn svg { width: 10px; height: 10px; }
+.tb-theme svg { width: 16px; height: 16px; }
+
+/* 主题切换单独走整页淡入，避免控件原有 hover 过渡被拍进新主题快照。 */
+:root.theme-transitioning *,
+:root.theme-transitioning *::before,
+:root.theme-transitioning *::after { transition: none !important; }
+:root.theme-transitioning::view-transition { pointer-events: none; }
+:root.theme-transitioning::view-transition-group(root) { animation: none; }
+:root.theme-transitioning::view-transition-old(root),
+:root.theme-transitioning::view-transition-new(root) { mix-blend-mode: normal; }
+:root.theme-transitioning::view-transition-old(root) { animation: none; }
+:root.theme-transitioning::view-transition-new(root) {
+  animation: themeFadeIn var(--dur-theme) ease-in-out both;
+}
+@keyframes themeFadeIn { from { opacity: 0; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  :root.theme-transitioning::view-transition-group(root),
+  :root.theme-transitioning::view-transition-old(root),
+  :root.theme-transitioning::view-transition-new(root) { animation: none !important; }
+}
+
+/* 紧凑态位移：把标识与标题让到收缩后的导航栏右侧。
+   这里挪的是 padding-left，不是 transform —— 整条标题栏一起 translateX 会把
+   右侧窗口按钮一并搬走：实测按钮组右边到 1228，而窗口只有 1180，关闭键
+   直接出界（docScrollW 也比 clientWidth 多出 48）。按钮必须钉在窗口右边缘，
+   所以只让标识和标题让位。0.22s Expo 7 对应 TitleBarControl.xaml:41-66。 */
+.titlebar.is-compact { padding-left: calc(16px + var(--pane-compact)); }
+.titlebar { transition: padding-left var(--dur-zoom) var(--ease-std); }
+
+/* ---------------- 主体：导航 + 内容 ---------------- */
+.shell {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+}
+
+/* 侧栏：展开 320 / 紧凑 48。Minimal 被主动禁用（RootPage.xaml:48,50） */
+.pane {
+  flex: 0 0 var(--pane);
+  width: var(--pane);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: var(--bg-pane);
+  transition: flex-basis var(--dur-base) var(--ease-std), width var(--dur-base) var(--ease-std);
+  padding-top: 4px;
+}
+.pane.is-compact { flex-basis: var(--pane-compact); width: var(--pane-compact); }
+/* 用户手动收起：和紧凑态同一套几何，但保留选择 */
+.pane.is-collapsed { flex-basis: var(--pane-compact); width: var(--pane-compact); }
+
+.pane-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 4px 8px 4px;
+  display: flex;
+  flex-direction: column;
+}
+.pane-scroll::-webkit-scrollbar { width: 8px; }
+.pane-scroll::-webkit-scrollbar-thumb { background: var(--scroll-thumb); border-radius: 4px; }
+
+/* 侧栏顶部的程序标识（无图标徽章，只补一行小字，避免与标题栏重复） */
+.pane-brand {
+  display: flex;
+  align-items: center;
+  padding: 12px 16px 10px;
+  min-height: 40px;
+}
+.pane-brand .pb-text {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 侧栏状态卡：网关运行状态 + Base URL。用 NavigationView 的 Informational 面
+   板色（fill-secondary），不引入新的强调色。 */
+.status-card {
+  margin: 0 8px 8px;
+  padding: 10px 12px;
+  border-radius: var(--r-card);
+  background: var(--fill-secondary);
+  border: 1px solid var(--card-stroke);
+}
+.status-card .row1 {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-caption);
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+  white-space: nowrap;
+}
+.status-card .row1 .dot {
+  width: 8px; height: 8px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--success-fg);
+}
+.status-card .row1 .dot.off { background: var(--text-tertiary); }
+.status-card .row2 {
+  margin-top: 2px;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pane.is-compact .status-card,
+.pane.is-collapsed .status-card { display: none; }
+
+.nav-item {
+  position: relative;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 0 12px 0 16px;
+  border-radius: var(--r-control);
+  color: var(--text-primary);
+  margin: 2px 0;
+  transition: background-color var(--dur-fast) linear;
+  white-space: nowrap;
+  overflow: hidden;
+}
+.nav-item:hover { background: var(--fill-subtle-hover); }
+.nav-item:active { background: var(--fill-subtle-pressed); }
+.nav-item .nav-icon {
+  flex: 0 0 16px;
+  width: 16px; height: 16px;
+  display: grid; place-items: center;
+  color: var(--text-primary);
+}
+.nav-item .nav-icon svg { width: 16px; height: 16px; }
+.nav-item .nav-label {
+  font-size: var(--fs-body);
+  overflow: hidden; text-overflow: ellipsis;
+}
+
+/* 选中态：左侧 3px 强调竖条 + 背景提亮（WinUI NavigationView 的 indicator） */
+.nav-item.is-selected { background: var(--fill-subtle-hover); }
+.nav-item.is-selected::before {
+  content: "";
+  position: absolute;
+  left: 0; top: 50%;
+  transform: translateY(-50%);
+  width: 3px; height: 16px;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.nav-item.is-selected .nav-icon { color: var(--accent); }
+
+/* 分组标题：NavigationViewItemHeader —— 12px Secondary，不缩进图标位 */
+.nav-head {
+  padding: 12px 16px 4px 16px;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  font-weight: var(--fw-normal);
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+/* 紧凑/收起态：只留图标。
+   文字必须收掉排版宽度，不能只把 opacity 打到 0：淡出的文字仍然占着自身
+   的宽度，图标会被挤到栏的左边缘——实测收起后图标中心 x=11.7，而栏中心是
+   24；底部「展开侧栏」的箭头更是被挤到 x=-12，被 overflow:hidden 整个裁掉，
+   按钮看上去是空的。 */
+.pane.is-compact .nav-label,
+.pane.is-compact .nav-head,
+.pane.is-collapsed .nav-label,
+.pane.is-collapsed .nav-head { opacity: 0; pointer-events: none; }
+.pane.is-compact .nav-label,
+.pane.is-collapsed .nav-label { flex: 0 0 0; width: 0; }
+/* 栏收窄后滚动条会把图标再挤出中心 4px，这里只留覆盖式滚动，不占宽度 */
+.pane.is-compact .pane-scroll,
+.pane.is-collapsed .pane-scroll { scrollbar-width: none; }
+.pane.is-compact .pane-scroll::-webkit-scrollbar,
+.pane.is-collapsed .pane-scroll::-webkit-scrollbar { width: 0; }
+.pane.is-compact .nav-item,
+.pane.is-collapsed .nav-item { gap: 0; padding: 0; justify-content: center; }
+.pane.is-compact .nav-head,
+.pane.is-collapsed .nav-head { height: 20px; padding: 12px 0 4px; }
+.pane.is-compact .pane-brand .pb-text,
+.pane.is-collapsed .pane-brand .pb-text { opacity: 0; }
+.nav-label, .nav-head, .pane-brand .pb-text { transition: opacity var(--dur-base) var(--ease-std); }
+
+/* 侧栏底部：收起按钮 + 程序位置（对应原生 NavigationView 的 PaneFooter 位置） */
+.side-spacer { flex: 1 1 auto; min-height: 8px; }
+
+.collapse-btn {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: 36px;
+  padding: 0 12px 0 16px;
+  border-radius: var(--r-control);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  flex: none;
+  margin: 2px 4px 2px 4px;
+}
+.collapse-btn:hover { background: var(--fill-subtle-hover); color: var(--text-primary); }
+.collapse-btn .nav-icon { flex: 0 0 16px; width: 16px; height: 16px; display: grid; place-items: center; }
+.collapse-btn .nav-icon svg { width: 16px; height: 16px; }
+.collapse-btn .lbl { font-size: var(--fs-body); }
+.pane.is-compact .collapse-btn,
+.pane.is-collapsed .collapse-btn { gap: 0; padding: 0; justify-content: center; margin: 2px 4px; }
+.pane.is-compact .collapse-btn .lbl,
+.pane.is-collapsed .collapse-btn .lbl { opacity: 0; pointer-events: none; flex: 0 0 0; width: 0; }
+.collapse-btn .lbl { transition: opacity var(--dur-base) var(--ease-std); }
+
+.side-foot {
+  padding: 6px 16px 10px;
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  line-height: 16px;
+  flex: none;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.pane.is-compact .side-foot,
+.pane.is-collapsed .side-foot { opacity: 0; pointer-events: none; height: 0; padding: 0; overflow: hidden; }
+
+/* ---------------- 内容区：圆角 0 + 只留左侧 1px 分割线 ---------------- */
+/* NavigationViewContentGridCornerRadius=0、BorderThickness="1,0,0,0"。
+   这一条是整体观感的关键：WinUI 默认会把内容区做成"卡片套卡片"。 */
+.content-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  border-left: 1px solid var(--divider);
+  background: var(--bg);
+  overflow: hidden;
+}
+
+.content {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 var(--head-x) var(--scroll-bottom) var(--head-x);
+  scroll-behavior: auto;
+}
+.content.is-narrow { padding-left: var(--head-x-narrow); padding-right: var(--head-x-narrow); }
+
+/* 内容栏最宽 1000，居中（PageFrame.xaml:12） */
+.page {
+  max-width: var(--page-max);
+  margin: 0 auto;
+  width: 100%;
+}
+
+/* ---------------- 页头：Margin 40,54,40,16；标题 28 SemiBold ---------------- */
+.page-head {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding-top: var(--head-top);
+  padding-bottom: var(--head-bottom);
+}
+.page-head h1 {
+  font-family: var(--font-display);
+  font-size: var(--fs-page);
+  line-height: 36px;
+  font-weight: var(--fw-semi);
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+}
+.page-head .head-icon {
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  margin: 5px 16px 0 0;
+  color: var(--text-primary);
+}
+
+/* 页头后缀：WinUI 没有这一层，这里补一行次要说明，和标题同一基线 */
+.page-head .head-sub {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+.page-head .head-actions {
+  margin-left: auto;
+  align-self: center;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex: none;
+}
+
+/* 页面主体：Padding 0,4,0,0 */
+.page-body {
+  padding-top: var(--body-top);
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap-32);
+}
+
+/* 页面切换的入场：只做 80ms 透明度，不做位移 */
+.page-enter { animation: pageIn var(--dur-base) var(--ease-std); }
+@keyframes pageIn { from { opacity: 0.4; } to { opacity: 1; } }

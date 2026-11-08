@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 通知栏小图标：24dp 单色。系统只吃 alpha，所以只画剪影，中间灯芯留空。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp" android:height="24dp"
+    android:viewportWidth="24" android:viewportHeight="24">
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="1.43" android:strokeLineCap="round" android:pathData="M8.81,7.16A3.19,3.19 0 0 1 15.19,7.16"/>
+    <path android:fillColor="#FFFFFFFF" android:pathData="M9.8,6.94 L14.2,6.94 L18.602,9.635 Q19.59,10.24 18.985,10.24 L5.015,10.24 Q4.41,10.24 5.398,9.635 L9.8,6.94Z"/>
+    <!-- evenOdd creates a real transparent window for system tinting. -->
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M4.575,10.24 L19.425,10.24 L17.28,17.39 Q16.95,18.49 15.85,18.49 L8.15,18.49 Q7.05,18.49 6.72,17.39 L4.575,10.24Z M5.84,11.34 L18.16,11.34 L16.048,16.62 Q15.74,17.39 14.97,17.39 L9.03,17.39 Q8.26,17.39 7.952,16.62 L5.84,11.34Z"/>
+    <path android:fillColor="#FFFFFFFF" android:pathData="M12,12.11 C11.01,13.76 10.35,14.75 10.35,14.97A1.65,1.65 0 0 0 13.65,14.97 C13.65,14.75 12.99,13.76 12,12.11Z"/>
+    <path android:fillColor="#FFFFFFFF" android:pathData="M7.105,18.49 L16.895,18.49A0.715,0.715 0 0 1 17.61,19.205 L17.61,19.315A0.715,0.715 0 0 1 16.895,20.03 L7.105,20.03A0.715,0.715 0 0 1 6.39,19.315 L6.39,19.205A0.715,0.715 0 0 1 7.105,18.49Z"/>
+</vector>

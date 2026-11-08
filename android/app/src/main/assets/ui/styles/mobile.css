@@ -1,0 +1,159 @@
+/* mobile.css —— 安卓上的重排层。只在 data-lg-mode="drawer"（窄屏）下生效，
+   宽屏横屏平板保持桌面版的并排布局。
+
+   桌面版把侧栏当成"布局里的一列"（.pane flex 0 0 296px），这在 400dp 的
+   手机宽度上会把内容压成一条。这里把它整个变成浮层：position:fixed + 位移，
+   在合成层上滑，不重排内容列——在 WebView 里，重排一次 35 条车道卡片的代价
+   比 transform 高一个量级。 */
+
+/* ---------------- 全局：触摸基线 ---------------- */
+
+:root {
+  --fs-body: 15px;
+  --fs-caption: 12.5px;
+  --lg-inset-top: 0px;
+  --lg-inset-bottom: 0px;
+  --lg-inset-left: 0px;
+  --lg-inset-right: 0px;
+  --lg-status-h: 0px;
+}
+
+/* 布局档位只在抽屉模式下改。桌面版的卡片网格是
+   repeat(auto-fill, minmax(min(--card-col-min,100%),1fr))，--card-col-min
+   一旦放到 0，auto-fill 会摊出无数列，横屏的卡片就被压成竖条。 */
+:root[data-lg-mode="drawer"] {
+  --pane: 288px;
+  --head-x: 16px;
+  --head-x-narrow: 16px;
+  --head-top: 12px;
+  --scroll-bottom: 20px;
+}
+
+html, body { overscroll-behavior: none; }
+body { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+
+/* 桌面版的窗口按钮与缩放热区在手机上没有任何语义 */
+.resize-grip,
+.tb-btn[aria-label="最小化"],
+.tb-btn[aria-label="最大化"],
+.tb-btn[aria-label="关闭"] { display: none !important; }
+
+/* 点按目标：桌面版按钮只有 32px 高，低于 Android 的 48dp 建议值。
+   开关（.toggle 是 40×20 的轨道）与窗口按钮除外——把它们撑高会压坏几何，
+   开关另用一层透明的扩展命中区补足。 */
+button:not(.toggle):not(.tb-btn),
+.nav-item,
+.collapse-btn,
+.list-row { min-height: 44px; }
+
+.toggle { position: relative; }
+.toggle::after { content: ""; position: absolute; inset: -12px -10px; }
+
+/* ---------------- 标题栏 ---------------- */
+
+.titlebar {
+  padding-top: calc(10px + var(--lg-status-h));
+  height: calc(var(--titlebar-h) + var(--lg-status-h));
+  flex-basis: calc(var(--titlebar-h) + var(--lg-status-h));
+  padding-left: calc(16px + var(--lg-inset-left));
+  position: sticky;
+  top: 0;
+  z-index: 16;  /* 压在抽屉之上：菜单键在抽屉打开时仍然要点得到，它也是关闭键 */
+}
+.titlebar-drag { display: none; }
+
+.lg-menu {
+  width: 40px;
+  margin-right: -4px;
+  color: var(--text-primary);
+  display: grid;
+  place-items: center;
+}
+.lg-menu svg { width: 20px; height: 20px; }
+
+/* ---------------- 抽屉 ---------------- */
+
+.lg-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 14;
+  background: var(--overlay);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity var(--dur-base) var(--ease-std);
+}
+
+:root[data-lg-mode="drawer"] .pane {
+  position: fixed;
+  z-index: 15;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: calc(min(84vw, 320px) + var(--lg-inset-left)) !important;
+  flex-basis: auto !important;
+  padding: calc(var(--titlebar-h) + var(--lg-status-h) + 4px) 0 var(--lg-inset-bottom) 0;
+  background: var(--surface-solid);
+  box-shadow: 12px 0 32px rgba(0, 0, 0, 0.28);
+  transform: translateX(calc(-100% - 32px));
+  transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1);
+  will-change: transform;
+}
+:root[data-lg-mode="drawer"][data-lg-drawer="open"] .pane { transform: none; }
+:root[data-lg-mode="drawer"][data-lg-drawer="open"] .lg-scrim { opacity: 1; pointer-events: auto; }
+
+:root[data-lg-mode="drawer"] .pane .nav-label,
+:root[data-lg-mode="drawer"] .pane .side-foot,
+:root[data-lg-mode="drawer"] .pane .pane-brand .pb-text {
+  opacity: 1 !important;
+  pointer-events: auto !important;
+  flex: initial !important;
+  width: auto !important;
+}
+:root[data-lg-mode="drawer"] .pane .status-card { display: block !important; }
+:root[data-lg-mode="drawer"] .pane .nav-item {
+  gap: 16px;
+  padding: 0 12px 0 16px;
+  justify-content: flex-start;
+  min-height: 48px;
+}
+:root[data-lg-mode="drawer"] .pane .collapse-btn { display: none; }
+
+:root[data-lg-mode="drawer"] .content-wrap { border-left: 0; }
+:root[data-lg-mode="drawer"] .titlebar.is-compact { padding-left: calc(16px + var(--lg-inset-left)); }
+:root[data-lg-mode="drawer"] .titlebar { padding-left: calc(16px + var(--lg-inset-left)); }
+
+/* ---------------- 内容：单列卡片、去掉桌面留白 ---------------- */
+
+.content {
+  padding-left: calc(var(--head-x) + var(--lg-inset-left));
+  padding-right: calc(var(--head-x) + var(--lg-inset-right));
+}
+
+:root[data-lg-mode="drawer"] .card-grid,
+:root[data-lg-mode="drawer"] .group-body {
+  grid-template-columns: minmax(0, 1fr) !important;
+}
+
+/* 卡片右侧的控件在窄屏换到下一行：桌面版靠 96px 的最小动作宽度排一行，
+   在 380dp 里那会把说明文字挤成一根窄柱 */
+@media (max-width: 560px) {
+  .card { grid-template-columns: auto minmax(0, 1fr); }
+  .card-right { grid-column: 1 / -1; margin-left: 0; justify-content: flex-start; flex-wrap: wrap; }
+  .card.is-narrow .card-right { grid-column: 1 / -1; }
+  .card-right.is-control { min-width: 0; }
+}
+
+.dialog-card,
+.flyout-card,
+.menu-card {
+  max-width: calc(100vw - 24px - var(--lg-inset-left) - var(--lg-inset-right)) !important;
+}
+.dialog-card { max-height: calc(100vh - var(--lg-status-h) - var(--lg-inset-bottom) - 48px); }
+
+body { -webkit-user-select: text; user-select: text; }
+.nav-item, .titlebar, button, .tb-btn, .collapse-btn { -webkit-user-select: none; user-select: none; }
+
+.content, .pane-scroll, .dialog-card { -webkit-overflow-scrolling: touch; }
+
+:root[data-theme="dark"] { color-scheme: dark; }
+:root[data-theme="light"] { color-scheme: light; }

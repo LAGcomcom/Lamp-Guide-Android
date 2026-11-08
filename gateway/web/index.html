@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="zh-Hans" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lamp Guide</title>
+<link rel="icon" type="image/svg+xml" href="./assets/lamp-guide.svg">
+<script>
+// Apply the saved appearance before styles paint the first page.
+(() => {
+  let saved = '';
+  try { saved = localStorage.getItem('zen-ui-theme') || ''; } catch (_) {}
+  if (saved !== 'light' && saved !== 'dark') saved = '';
+  const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.dataset.theme = saved || (dark ? 'dark' : 'light');
+  document.documentElement.dataset.themePreference = saved || 'System';
+})();
+</script>
+
+<!-- 这些都在虚拟主机上、由同一个静态服务给出，但 ES 模块的抓取链是串行的：
+     shell.js 解析完才知道要 util/bridge/components/pages。modulepreload 让浏览器
+     在解析主脚本之前就把整张图并行抓下来——冷启动那一秒里，省掉的正好是四五个
+     串行往返。 -->
+<link rel="modulepreload" href="./js/util.js">
+<link rel="modulepreload" href="./js/bridge.js">
+<link rel="modulepreload" href="./js/components/index.js">
+<link rel="modulepreload" href="./js/components/core.js">
+<link rel="modulepreload" href="./js/components/flyout.js">
+<link rel="modulepreload" href="./js/pages/gateway.js">
+
+<link rel="stylesheet" href="./styles/tokens.css">
+<link rel="stylesheet" href="./styles/base.css">
+<link rel="stylesheet" href="./styles/shell.css">
+<link rel="stylesheet" href="./styles/controls.css">
+</head>
+<body class="no-anim">
+<div id="app"></div>
+<script type="module" src="./js/shell.js"></script>
+</body>
+</html>

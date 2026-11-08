@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Android 13+ 主题图标：系统只取 alpha，这里交剪影，不画玻璃。 -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <path android:fillColor="#00000000" android:strokeColor="#FFFFFFFF" android:strokeWidth="4.55" android:strokeLineCap="round" android:pathData="M43.85,38.6A10.15,10.15 0 0 1 64.15,38.6"/>
+    <path android:fillColor="#FFFFFFFF" android:pathData="M47,37.9 L61,37.9 L75.006,46.475 Q78.15,48.4 76.225,48.4 L31.775,48.4 Q29.85,48.4 32.994,46.475 L47,37.9Z"/>
+    <!-- evenOdd creates a real transparent window for system tinting. -->
+    <path android:fillColor="#FFFFFFFF" android:fillType="evenOdd" android:pathData="M30.375,48.4 L77.625,48.4 L70.8,71.15 Q69.75,74.65 66.25,74.65 L41.75,74.65 Q38.25,74.65 37.2,71.15 L30.375,48.4Z M34.4,51.9 L73.6,51.9 L66.88,68.7 Q65.9,71.15 63.45,71.15 L44.55,71.15 Q42.1,71.15 41.12,68.7 L34.4,51.9Z"/>
+    <path android:fillColor="#FFFFFFFF" android:pathData="M54,54.35 C50.85,59.6 48.75,62.75 48.75,63.45A5.25,5.25 0 0 0 59.25,63.45 C59.25,62.75 57.15,59.6 54,54.35Z"/>
+    <path android:fillColor="#FFFFFFFF" android:pathData="M38.425,74.65 L69.575,74.65A2.275,2.275 0 0 1 71.85,76.925 L71.85,77.275A2.275,2.275 0 0 1 69.575,79.55 L38.425,79.55A2.275,2.275 0 0 1 36.15,77.275 L36.15,76.925A2.275,2.275 0 0 1 38.425,74.65Z"/>
+</vector>

@@ -1,0 +1,79 @@
+/* ==========================================================================
+   base.css —— 重置、排版、滚动条、焦点环。不含任何组件。
+   ========================================================================== */
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  background: var(--bg);
+  color: var(--text-primary);
+}
+
+body {
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  line-height: 20px;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+  cursor: default;
+  overflow: hidden;
+}
+
+input, button, select, textarea { font: inherit; color: inherit; }
+button { background: none; border: 0; padding: 0; cursor: default; }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+h1, h2, h3, p { margin: 0; }
+
+/* 焦点环：用 outline 而非 box-shadow，避免和卡片的 1px 描边打架 */
+:focus { outline: none; }
+:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: 1px;
+  border-radius: var(--r-control);
+}
+
+/* 滚动条：WinUI 的细窄覆盖式 */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb {
+  background: var(--scroll-thumb);
+  border: 4px solid transparent;
+  background-clip: content-box;
+  border-radius: 6px;
+  min-height: 32px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--scroll-thumb-hover);
+  background-clip: content-box;
+}
+::-webkit-scrollbar-corner { background: transparent; }
+
+/* 首帧静音：宿主启动时会跳过所有 ToggleSwitch 的滑动（遍历视觉树 SkipToFill）。
+   这里等价处理：第 1 帧挂 .no-anim，让所有过渡整体失效一次。 */
+.no-anim * { transition: none !important; }
+.no-anim .toggle-thumb { transition: none !important; }
+
+/* 语义工具类 */
+.muted { color: var(--text-secondary); }
+.danger-text { color: var(--critical-text); }
+.mono {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+.row-list { display: flex; flex-direction: column; gap: var(--gap-2); }
+.truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.nowrap { white-space: nowrap; }
+.icon { display: block; flex: none; }
+.icon svg { width: 100%; height: 100%; display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}

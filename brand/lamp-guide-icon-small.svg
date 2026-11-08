@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- 16–32px 专用：去掉玻璃与光晕，笔画加粗、主体放大，缩到 16px 仍是一只灯。 -->
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" fill="none" role="img" aria-label="Lamp Guide">
+  <title>Lamp Guide</title>
+  <defs><linearGradient id="night" x1="1" y1="1" x2="31" y2="31" gradientUnits="userSpaceOnUse"><stop stop-color="#2A4C6E"/><stop offset="1" stop-color="#0A1826"/></linearGradient><linearGradient id="amber" x1="9" y1="7" x2="23" y2="25" gradientUnits="userSpaceOnUse"><stop stop-color="#FFEDB8"/><stop offset="1" stop-color="#E0981F"/></linearGradient></defs>
+  <rect x=".5" y=".5" width="31" height="31" rx="7.6" fill="url(#night)"/>
+  <path d="M12.4,11.8A3.6,3.6 0 0 1 19.6,11.8" stroke="url(#amber)" stroke-width="1.8" stroke-linecap="round" fill="none"/>
+  <path d="M13.4,11.5 L18.6,11.5 L22.663,14 Q23.8,14.7 23.1,14.7 L8.9,14.7 Q8.2,14.7 9.338,14 L13.4,11.5Z" fill="url(#amber)"/>
+  <path d="M8.4,14.7 L23.6,14.7 L21.723,21.1 Q21.4,22.2 20.3,22.2 L11.7,22.2 Q10.6,22.2 10.277,21.1 L8.4,14.7Z" fill="url(#amber)"/>
+  <path d="M16,16 C14.8,17.5 14,18.4 14,19.2A2,2 0 0 0 18,19.2 C18,18.4 17.2,17.5 16,16Z" fill="#FFF3D2"/>
+  <path d="M10.55,22.2 L21.45,22.2A0.85,0.85 0 0 1 22.3,23.05 L22.3,23.15A0.85,0.85 0 0 1 21.45,24 L10.55,24A0.85,0.85 0 0 1 9.7,23.15 L9.7,23.05A0.85,0.85 0 0 1 10.55,22.2Z" fill="url(#amber)"/>
+</svg>

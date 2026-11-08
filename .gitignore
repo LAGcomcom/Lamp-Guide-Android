@@ -1,0 +1,40 @@
+# Local configuration and credentials
+local.properties
+**/local.properties
+.env
+.env.*
+!.env.example
+*.jks
+*.keystore
+key.properties
+config.json
+phone-*.json
+
+# Build outputs, generated bindings and caches
+.gradle/
+**/.gradle/
+.kotlin/
+**/.kotlin/
+**/build/
+_build/
+dist/
+node_modules/
+*.aar
+*-sources.jar
+*.apk
+*.aab
+*.log
+
+# Workstation state and diagnostic captures
+.idea/
+.vscode/
+captures/
+docs/codex/
+docs/sessions/
+shots/
+brand/_*
+brand/out/*
+!brand/out/512-full.png
+!brand/out/launcher-preview.png
+.DS_Store
+Thumbs.db

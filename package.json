@@ -1,0 +1,11 @@
+{
+  "name": "lamp-guide-android-assets",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "icons": "node brand/build-icon.cjs && node brand/render-adaptive.cjs"
+  },
+  "devDependencies": {
+    "@resvg/resvg-js": "2.6.2"
+  }
+}

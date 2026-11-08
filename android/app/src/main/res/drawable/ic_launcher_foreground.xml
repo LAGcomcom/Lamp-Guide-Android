@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="256" android:viewportHeight="256">
+    <!-- 灯笼：与 web/assets/lamp-guide.svg 同一组几何，去掉外框，留给自适应图标 -->
+    <path android:strokeColor="#F4B54E" android:strokeWidth="14" android:strokeLineCap="round"
+        android:pathData="M107,72V60a21,21 0,0 1,42 0v12" />
+    <path android:fillColor="#F4B54E"
+        android:pathData="m96,83l-17,21h98l-17,-21a12,12 0,0 0,-9 -4h-46a12,12 0,0 0,-9 4Z" />
+    <path android:strokeColor="#F4B54E" android:strokeWidth="14" android:strokeLineJoin="round"
+        android:pathData="m86,111 8,64a22,22 0,0 0,22 19h24a22,22 0,0 0,22 -19l8,-64" />
+    <path android:fillColor="#FFE9AF"
+        android:pathData="M128,119c-2,16 -18,22 -18,36a18,18 0,0 0,36 0c0,-14 -16,-20 -18,-36Z" />
+    <path android:strokeColor="#F4B54E" android:strokeWidth="14" android:strokeLineCap="round"
+        android:pathData="M97,208h62" />
+</vector>

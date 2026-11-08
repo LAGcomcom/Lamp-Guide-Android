@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="zh-Hans" data-theme="light">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<title>Lamp Guide</title>
+<link rel="icon" type="image/svg+xml" href="./assets/lamp-guide.svg">
+<script>
+// 在样式落笔之前先定主题，避免第一帧闪白。
+(() => {
+  let saved = '';
+  try { saved = localStorage.getItem('zen-ui-theme') || ''; } catch (_) {}
+  if (saved !== 'light' && saved !== 'dark') saved = '';
+  const dark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  document.documentElement.dataset.theme = saved || (dark ? 'dark' : 'light');
+  document.documentElement.dataset.themePreference = saved || 'System';
+})();
+</script>
+
+<!-- 安卓的 WebView 没有 window.chrome.webview（那是 WebView2 的 API）。
+     宿主用 addJavascriptInterface 注入了 LampAndroid，这里补上那一个入口，
+     bridge.js 与所有页面因此一行都不用改：协议、信封、超时原样沿用。 -->
+<script>
+(() => {
+  const host = window.LampAndroid;
+  window.chrome = window.chrome || {};
+  window.chrome.webview = window.chrome.webview || {};
+  if (host) {
+    window.chrome.webview.postMessage = function (raw) { host.post(String(raw)); };
+  }
+})();
+</script>
+
+<!-- ES 模块的抓取链是串行的：modulepreload 把整张图提前并行抓下来。 -->
+<link rel="modulepreload" href="./js/util.js">
+<link rel="modulepreload" href="./js/bridge.js">
+<link rel="modulepreload" href="./js/components/index.js">
+<link rel="modulepreload" href="./js/components/core.js">
+<link rel="modulepreload" href="./js/components/flyout.js">
+<link rel="modulepreload" href="./js/pages/gateway.js">
+
+<link rel="stylesheet" href="./styles/tokens.css">
+<link rel="stylesheet" href="./styles/base.css">
+<link rel="stylesheet" href="./styles/shell.css">
+<link rel="stylesheet" href="./styles/controls.css">
+<!-- 手机上唯一新增的一层：抽屉侧栏与触摸基线。 -->
+<link rel="stylesheet" href="./styles/mobile.css">
+</head>
+<body class="no-anim">
+<div id="app"></div>
+<!-- 安卓布局层：抽屉侧栏 + 收起桌面专属项。加载早于 shell.js。 -->
+<script src="./js/mobile.js"></script>
+<script type="module" src="./js/shell.js"></script>
+</body>
+</html>

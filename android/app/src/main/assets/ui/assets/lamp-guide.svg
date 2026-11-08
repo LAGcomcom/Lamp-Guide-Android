@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" fill="none">
+  <title>Lamp Guide</title>
+  <defs>
+    <linearGradient id="night" x1="32" y1="16" x2="224" y2="248" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#233E55"/>
+      <stop offset="1" stop-color="#0B1A2B"/>
+    </linearGradient>
+    <linearGradient id="light" x1="92" y1="72" x2="166" y2="208" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFE8A3"/>
+      <stop offset="1" stop-color="#F4B54E"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientTransform="translate(128 135) scale(96)" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFD578" stop-opacity=".22"/>
+      <stop offset="1" stop-color="#FFD578" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+  <rect x="8" y="8" width="240" height="240" rx="56" fill="url(#night)"/>
+  <rect x="9" y="9" width="238" height="238" rx="55" stroke="#FFF" stroke-opacity=".10" stroke-width="2"/>
+  <circle cx="128" cy="135" r="96" fill="url(#glow)"/>
+  <path d="M107 70V60a21 21 0 0 1 42 0v10" stroke="url(#light)" stroke-width="12" stroke-linecap="round"/>
+  <path d="m98 81-17 21h94l-17-21a12 12 0 0 0-9-4h-42a12 12 0 0 0-9 4Z" fill="url(#light)"/>
+  <path d="m86 109 8 66a22 22 0 0 0 22 19h24a22 22 0 0 0 22-19l8-66" stroke="url(#light)" stroke-width="12" stroke-linejoin="round"/>
+  <path d="M128 119c-2 16-18 22-18 36a18 18 0 0 0 36 0c0-14-16-20-18-36Z" fill="#FFE9AF"/>
+  <path d="M97 208h62" stroke="url(#light)" stroke-width="12" stroke-linecap="round"/>
+  <path d="m202 68 3 9 9 3-9 3-3 9-3-9-9-3 9-3 3-9Z" fill="#FFE9AF"/>
+</svg>

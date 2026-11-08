@@ -1,0 +1,1936 @@
+/* ==========================================================================
+   controls.css —— 控件层。状态机照抄 SettingsCard.Resource.xaml:238-329：
+     hover   → 背景升一档 + 边框换 Elevation，文字保持 Primary
+     pressed → 背景升 Tertiary + 边框回落，文字降为 Secondary
+     disabled→ 完全不碰背景与边框，只降文字/图标
+   ========================================================================== */
+
+/* ============================ 分组 SettingsGroup ============================ */
+.group { display: flex; flex-direction: column; gap: var(--gap-8); }
+.group-head { display: flex; flex-direction: column; gap: 4px; }
+.group-title {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-semi);       /* BodyStrongTextBlockStyle */
+  margin-left: 1px;                  /* SettingsGroup 标题 Margin 1,0,0,0 */
+  color: var(--text-primary);
+}
+.group-desc {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+/* 一组卡片是一条响应式网格：窗口宽就两列，窄了就回到一列。
+   设置、服务、Agent 这些面本来就是"一堆等价的条目"，一行一条会把
+   一张 1000 宽的页面写成一条又长又空的竖线。 */
+.group-body {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--card-col-min), 100%), 1fr));
+  gap: var(--card-col-gap);
+  /* 同一行的两张卡等高：这是"排整齐"的关键。说明折成两行时（失败转移那条），
+     左边的卡比右边高 18px，两张卡的下沿就错开了；错开的下沿在白底上是一条
+     看得见的破口，比空白难看得多。控件在自己格子里垂直居中，多出来的高度
+     会变成卡内的留白，而不是错位。 */
+  align-items: stretch;
+}
+/* 展开器：收起时和别的卡片一样占一格，展开后才横跨整行——展开的内容
+   （任务阶段、模型清单、Key 说明）在半格里读不了。 */
+.group-body > .card.is-full,
+.group-body > .gw-log,
+.group-body > .gw-inline { grid-column: 1 / -1; }
+.group-body > .card.is-open { grid-column: 1 / -1; }
+
+/* ============================ 卡片 SettingsCard ============================ */
+.card {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;   /* 图标 / 标题 / 内容 / 尾部 */
+  align-items: center;
+  column-gap: 0;
+  min-height: var(--card-min-h);
+  padding: var(--inset-card);
+  border: 1px solid var(--card-stroke);
+  border-radius: var(--r-card);
+  background: var(--card-bg);
+  background-origin: border-box;
+  align-content: center;
+  transition: background-color var(--dur-fast) linear, border-color var(--dur-fast) linear;
+  overflow: hidden;
+}
+
+/* 有交互（可点击/展开器/右侧有控件）才启用 hover 反馈 */
+.card.is-interactive:hover {
+  background: var(--card-bg-hover);
+  border-color: var(--card-stroke-hover);
+}
+.card.is-interactive:active {
+  background: var(--card-bg-pressed);
+  border-color: var(--card-stroke-pressed);
+}
+/* 文本降级只发生在 pressed（源码就是这个反直觉的顺序） */
+.card.is-interactive:active .card-title { color: var(--text-secondary); }
+
+/* disabled：不碰底色与边框 */
+.card.is-disabled .card-title,
+.card.is-disabled .card-desc,
+.card.is-disabled .card-icon { color: var(--text-disabled); }
+.card.is-disabled > * { pointer-events: none; }
+
+.card-icon {
+  width: var(--card-icon-max);
+  height: var(--card-icon-max);
+  flex: none;
+  margin: 0 var(--card-icon-gap) 0 2px;   /* Margin 2,0,20,0 */
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+.card-icon svg { width: 100%; height: 100%; max-width: var(--card-icon-max); max-height: var(--card-icon-max); }
+
+/* ---------- 品牌标方块 ----------
+   Agent 和账号渠道的每一条都是一个具体产品，左侧那枚方块放的是那一家
+   自己的 mark，不是通用线条图标。方块底色比卡片抬一档，这样即使 mark
+   是深底品牌（OpenCode 的 #131010）也不会糊进卡片。中性 mark（描边型）
+   跟着主题换色，彩色 mark 保留品牌原色。 */
+.card-brand {
+  width: var(--brand-box);
+  height: var(--brand-box);
+  flex: none;
+  margin: 0 var(--card-icon-gap) 0 0;
+  display: grid;
+  place-items: center;
+  border-radius: var(--r-control);
+  background: var(--brand-box-bg);
+  border: 1px solid var(--brand-box-stroke);
+  color: var(--text-secondary);
+  overflow: hidden;
+}
+.card-brand .brand-mark {
+  width: 18px;
+  height: 18px;
+  display: grid;
+  place-items: center;
+}
+.card-brand .brand-mark svg { width: 100%; height: 100%; display: block; }
+/* 横排字标（Aider）：按高度收，宽度自适应 */
+.card-brand .brand-mark.is-wide { width: auto; max-width: 26px; height: 12px; }
+.card-brand .brand-mark.is-wide svg { width: auto; height: 100%; }
+/* 描边型 mark 跟随主题；深色主题里给它一点对比，免得深底品牌糊住 */
+.card-brand .brand-mark.is-neutral { color: var(--text-primary); }
+.card-brand .brand-mark.is-blank { color: var(--text-tertiary); }
+.card.is-disabled .card-brand { opacity: 0.5; }
+
+/* 展开后横跨整行时，方块与标题的间距不再按半格收窄 */
+.card.is-open .card-brand { margin-right: 16px; }
+.card.is-disabled .card-icon { color: var(--text-disabled); }
+
+.card-main {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+.card-title {
+  font-size: var(--fs-body);
+  line-height: 20px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+/* 卡片说明是要读的一句话，不是脚注：12px / 16px（1.33）在 1440 宽的窗口里
+   偏小也偏挤，尤其说明折成两行时（运行状态那条出口 IP）。抬到 12.5px / 17px
+   —— 与标题 14px 之间仍差两档，层级不变，但两行说明不再粘在一起。 */
+.card-desc {
+  font-size: 13px;
+  line-height: 18.5px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+/* header/desc 非空时补行距 */
+.card-main.has-desc .card-title + .card-desc { margin-top: 2px; }
+
+.card-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex: none;
+  margin-left: 16px;                  /* SettingsCard 内容区右边距 */
+}
+.card-right.is-control { min-width: var(--card-action-min); }
+
+.card-tail { display: none; }
+.card-tail .tail-icon {
+  width: 13px; height: 13px;
+  color: var(--text-secondary);
+  display: grid; place-items: center;
+}
+
+/* 窄窗：图标+标题一行，控件换到第二行 */
+.card.is-narrow {
+  grid-template-columns: auto minmax(0, 1fr);
+  row-gap: 8px;
+  padding-bottom: 12px;
+}
+.card.is-narrow .card-main { padding-right: 12px; }
+.card.is-narrow .card-icon { grid-area: icon; }
+.card.is-narrow .card-main { grid-area: main; }
+.card.is-narrow .card-right {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  min-width: 0;
+  margin-left: 0;
+  padding-left: 0;
+  flex-wrap: wrap;
+}
+
+/* 展开器：头行 + 体，体上边框当分隔线 */
+.card-expander { display: block; padding: 0; }
+.card-expander .card-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  min-height: var(--card-min-h);
+  padding: var(--inset-card);
+}
+.card-expander.is-open { padding: 0; }
+.card-expander.is-open .card-head { padding-bottom: 12px; }
+.card-expander.is-open .card-body {
+  padding: 0 var(--inset-card) var(--inset-card) var(--inset-card);
+  border-top: 1px solid var(--card-stroke);
+  margin-top: 0;
+  padding-top: 12px;
+}
+
+.chev {
+  width: 16px; height: 16px;
+  flex: none;
+  display: grid; place-items: center;
+  color: var(--text-secondary);
+  margin-left: 8px;
+  transition: transform var(--dur-expand) var(--ease-std);
+}
+.chev svg { width: 16px; height: 16px; }
+.card-expander.is-open .chev { transform: rotate(180deg); }
+
+.card-body { overflow: hidden; }
+.card-body .body-row {
+  display: flex; align-items: center; gap: 12px;
+  padding: 8px 0;
+  flex-wrap: wrap;
+}
+
+/* ---------- 供应商卡：排名 / 品牌标 / 身份 / 排成格子的字段 ----------
+   一张卡讲一件事：这是哪一家、它的免费档是什么形状、端点在哪。
+   头行是 排名 + 标 + 名字 + 右侧动作，字段区在下面按"标签 / 值"排成两列，
+   宽字段（端点、模型清单）占整行。所有供应商共用这一套格子，横向能比。 */
+.prov-card {
+  /* 46 = 品牌方块 32 + 与名字的间距 14：字段从名字的左边缘起，卡片里只有
+     两条竖锚线（名次最左、其余全部落在名字那条线上）。 */
+  --prov-indent: 46px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: var(--inset-card);
+  align-items: stretch;
+}
+/* 带名次的卡再多让一格（名次 22 + 间距 14），字段才落在名字那条竖线上 */
+.prov-card.has-rank { --prov-indent: 82px; }
+.prov-addbox { color: var(--text-secondary); }
+.prov-addbox .icon { width: 16px; height: 16px; }
+.prov-head {
+  display: flex;
+  align-items: center;
+  gap: 0;                 /* 间距由方块自己的 margin 给，叠加会多出一倍 */
+  min-width: 0;
+}
+.prov-head .card-right { margin-left: auto; }
+.prov-ident {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.prov-name {
+  font-size: var(--fs-body);
+  line-height: 20px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.prov-sub {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+/* 名次：两位数等宽，排在品牌标左边一列，十几张卡竖着扫时是一条对得齐的轴 */
+.prov-rank {
+  flex: none;
+  width: 22px;
+  margin-right: var(--card-icon-gap);
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  text-align: right;
+  color: var(--text-tertiary);
+}
+.prov-rank-icon {
+  display: grid;
+  place-items: center;
+  color: var(--text-secondary);
+}
+.prov-rank-icon .icon { width: 16px; height: 16px; }
+
+.prov-rows {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 8px 20px;
+  padding-left: var(--prov-indent);
+}
+/* 整行的卡固定四格：第一行 免费档 / 额度 / 网络 / 协议，第二行端点占两格、
+   免费模型占两格。固定列数而不是 auto-fit——列数一变，十几张卡的名次轴
+   就跟着变，读起来像两种不同的表。 */
+.prov-card.is-full .prov-rows {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px 20px;
+}
+.prov-field { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.prov-field.is-wide { grid-column: span 2; }
+.prov-field.is-span { grid-column: 1 / -1; }
+.prov-k {
+  font-size: var(--fs-caption);
+  line-height: 15px;
+  color: var(--text-tertiary);
+}
+.prov-v {
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.prov-v.is-mono { font-family: var(--font-mono); }
+.prov-v.is-mute { color: var(--text-secondary); }
+.prov-note {
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  color: var(--text-secondary);
+  padding-left: var(--prov-indent);
+  overflow-wrap: anywhere;
+}
+/* 停用的那一家整体退一档，但状态徽章和开关保持在原位——不是把它变成不可点 */
+/* 窄窗（内容区 < 590）：名次那格让出来，字段回到两列——否则四列 160px 都不到，
+   端点一断行就认不出来 */
+.content.is-narrow .prov-card.has-rank { --prov-indent: 46px; }
+.content.is-narrow .prov-card.is-full .prov-rows {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+.content.is-narrow .prov-field.is-wide { grid-column: 1 / -1; }
+.prov-card.is-off .prov-name { color: var(--text-secondary); }
+.prov-card.is-off .prov-v { color: var(--text-secondary); }
+.prov-add { gap: 0; }
+
+
+/* 首字方块：没登记品牌的渠道用它自己的名字缩写占位，而不是留一个虚线空框
+   （一排空框会被读成"这一面还没做完"）。字号比品牌标大一档，笔画才够重。
+   letter-spacing 给 0.02em：汉字单字居中时视觉重心偏左下，微调一点才坐在正中。 */
+.card-brand.is-mono { color: var(--text-secondary); }
+.brand-mono {
+  font-family: var(--font-display);
+  font-size: 13px;
+  line-height: 16px;
+  font-weight: var(--fw-semi);
+  letter-spacing: 0.02em;
+}
+
+/* ============================ 聚合面 ============================
+   这一面只回答两件事：这批模型在几处有（冗余度），以及先烧谁（顺序）。
+   所以它和供应商面共用同一条几何：名次在最左当轴，品牌方块、名字、右侧动作
+   各自对得齐；候选明细是一张真表，行与行之间只靠对齐和一条分隔线分组。 */
+/* 烧掉顺序行与虚拟模型卡占整行：它们的右半边是"还剩多久 / 几处可选"，
+   挤进半格会折成两行。渠道行是参考清单，和供应商卡一样按两列铺——
+   7 家竖着排一整屏，读起来像排行榜，而它其实只是一份名单。 */
+.group-body > .agg-turn:not(.is-chan),
+.group-body > .agg-sum,
+.group-body > .card.agg-vm { grid-column: 1 / -1; }
+
+/* 汇总条：四个数并排，不装进卡片——它们不是可操作项，套一个容器只会多一层框 */
+.agg-sum {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 18px;
+  padding: 2px 2px 0;
+}
+.agg-sum-item {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+}
+.agg-sum-item.is-warn { color: var(--warn-fg); }
+
+/* 烧掉顺序的一行：名次 + 品牌标 + 身份 + 到期 + 上下箭头。
+   和 .card 同高同底色，但它不是卡片（不可展开），用一条 1px 描边和卡片区分开。 */
+.agg-turn {
+  display: grid;
+  grid-template-columns: 22px auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 0;
+  min-height: var(--card-min-h);
+  padding: 12px var(--inset-card);
+  border: 1px solid var(--card-stroke);
+  border-radius: var(--r-card);
+  background: var(--card-bg);
+  transition: background-color var(--dur-fast) linear, border-color var(--dur-fast) linear;
+}
+.agg-turn:hover { background: var(--card-bg-hover); border-color: var(--card-stroke-hover); }
+.agg-turn .prov-rank { margin-right: var(--card-icon-gap); }
+/* 名次在这一面是真正的排序轴（不是装饰性编号），所以用二级色而不是三级：
+   三级色在浅底上只有 3.3:1，十几行竖着扫时那几个数字会读不出来。 */
+.agg-turn .prov-rank { color: var(--text-secondary); }
+.agg-turn-main { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.agg-turn-name {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: var(--fs-body);
+  line-height: 20px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+}
+.agg-turn-sub {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.agg-turn-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: 16px;
+  flex: none;
+}
+.agg-turn-move { display: flex; align-items: center; gap: 2px; }
+.agg-turn-move .btn { width: 26px; min-width: 26px; height: 26px; }
+/* 没有启用账号的那一家整行退一档，但箭头仍在原位——它是"能不能排"，不是"能不能点" */
+.agg-turn.is-off .agg-turn-name,
+.agg-turn.is-off .agg-turn-sub { color: var(--text-secondary); }
+.agg-turn.is-off .card-brand { opacity: 0.5; }
+
+/* 渠道行（无箭头那种）：同一套几何去掉名次那一格。它和烧掉顺序行只差
+   "能不能改"，所以两者的标、名字、说明、右侧状态必须落在同一条竖线上。 */
+.agg-turn.is-chan {
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  min-height: 60px;
+}
+/* 渠道面（29 家那一面）的行必须整行：它比聚合面的渠道行多一栏「额度端点原文」，
+   而那一栏是这个面唯一回答「这家打的是哪个域名」的地方 —— 半格宽会把它折成三行，
+   连带把右侧的额度胶囊与动作按钮挤成两排。 */
+.group-body > .agg-turn.is-wide { grid-column: 1 / -1; }
+.agg-turn.is-chan .agg-turn-right { margin-left: 16px; }
+.agg-membership-button { min-width:96px; height:28px; font-size:var(--fs-caption); box-shadow:none; }
+.agg-membership-button.is-on { color:var(--success-fg); background:var(--success-bg); border-color:transparent; }
+.agg-membership-button.is-on:hover:not(:disabled) { color:var(--success-fg); background:var(--success-bg); border-color:var(--success-fg); }
+.content.is-narrow .agg-turn.is-chan {
+  grid-template-columns: auto minmax(0, 1fr);
+}
+.content.is-narrow .agg-turn.is-chan .agg-turn-right {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  margin-left: 0;
+  padding-left: calc(var(--brand-box) + var(--card-icon-gap));
+}
+
+
+/* ============================ 渠道卡 ============================
+   一家渠道一张卡：卡头是这一家的结论，卡体是它的账号清单。
+   这一面和聚合面的渠道行只差一件事 —— 它要回答「钥匙配齐了吗」，
+   所以卡体必须把「哪个号、怎么来的、还剩多久」逐条摊开，
+   而这些正是同一家多账号时唯一无法压成一行的事实。 */
+.chan-card {
+  container: channel-card / inline-size;
+  grid-column: 1 / -1;
+  border: 1px solid var(--card-stroke);
+  border-radius: var(--r-card);
+  background: var(--card-bg);
+  transition: background-color var(--dur-fast) linear, border-color var(--dur-fast) linear;
+}
+.chan-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  min-height: 60px;
+  padding: 12px var(--inset-card);
+}
+.chan-head .card-brand { margin-right: var(--card-icon-gap); }
+.chan-head-main { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.chan-head-right {
+  display: flex;
+  align-items: center;
+  /* 12px 而不是 8px：这里的两个元素一个是状态胶囊、一个是入口按钮，
+     胶囊自带 9px 内边距，8px 缝在浅底上会读成「粘连」。 */
+  gap: 12px;
+  margin-left: 16px;
+  flex: none;
+}
+/* 入口按钮按内容宽度：这一列有「贴 Key / 加一个 Key / 重新登录 / 加一个账号」
+   四种长度，写死宽度会让最长的那个折行、最短的那个空出一块。 */
+.chan-actions { display: flex; align-items: center; gap: 4px; flex: none; }
+/* 未接入的那一家整卡退一档，但状态胶囊与入口保持原样 —— 它只是「还不能用」，
+   不是「不能点」。 */
+.chan-card.is-off .agg-turn-name,
+.chan-card.is-off .agg-turn-sub { color: var(--text-secondary); }
+.chan-card.is-off .card-brand { opacity: 0.5; }
+.chan-endpoint { font-family: var(--font-mono); }
+
+/* 账号清单：一个号一行，四格（圆点 / 名字与来源 / 这一份的额度 / 退出）。
+   行与行之间只靠一条 1px 分隔线分组，不加容器 —— 清单本身就是容器。 */
+.chan-accs {
+  border-top: 1px solid var(--divider);
+  padding: 4px var(--inset-card);
+  background: var(--fill-subtle-hover);
+  border-radius: 0 0 var(--r-card) var(--r-card);
+}
+.chan-acc {
+  display: grid;
+  grid-template-columns: 8px minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 10px;
+  min-height: 60px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--divider);
+}
+.chan-acc-side { display: flex; align-items: center; gap: 16px; min-width: 0; flex-wrap: wrap; }
+.chan-acc:last-child { border-bottom: 0; }
+/* 圆点是「这一份额度现在什么状态」的记号，不是装饰：同一家里一个号已到期、
+   一个号还能撑二十天，全涂成一种绿就把它们又合回去了。 */
+.chan-acc-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  justify-self: center;
+}
+.chan-acc-dot.is-ok { background: var(--ok); }
+.chan-acc-dot.is-warn { background: var(--warn); }
+.chan-acc-dot.is-bad { background: var(--bad); }
+.chan-acc-dot.is-mute { background: var(--text-tertiary); }
+.chan-acc-main { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.chan-acc-id {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  user-select: text;
+}
+.chan-acc-name {
+  font-size: var(--fs-body);
+  line-height: 18px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.chan-acc-meta {
+  font-size: var(--fs-caption);
+  line-height: 15px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.chan-acc .btn { width: auto; min-width: 60px; min-height: 32px; padding: 0 12px; }
+.chan-logout { color: var(--text-secondary); }
+.chan-logout:hover { color: var(--critical-text); }
+/* 空清单：托管的那两家与未接入的那些家都会走到这里。用一句说明取代空白，
+   空白会被读成「这一家没有账号」，而它其实有、只是不由这一面管。 */
+.chan-acc.is-empty {
+  grid-template-columns: minmax(0, 1fr);
+  padding: 10px 0 4px;
+  border-bottom: 0;
+  display: block;
+}
+/* 空清单那两句是 span（正常的行里它们在 div 里），display:block 让它们各占一行：
+   否则两句话会连成一行，读起来像一句没断句的长句。 */
+.chan-acc.is-empty .chan-acc-name {
+  display: block;
+  font-weight: var(--fw-normal);
+  color: var(--text-secondary);
+}
+.chan-acc.is-empty .chan-acc-meta { display: block; margin-top: 2px; }
+
+/* 凭据不全的提示：只在有账号、又缺字段时出现 */
+.chan-warn {
+  padding: 0 var(--inset-card) 12px calc(var(--inset-card) + var(--brand-box) + var(--card-icon-gap));
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--warn-fg);
+  overflow-wrap: anywhere;
+}
+.content.is-narrow .chan-head {
+  grid-template-columns: auto minmax(0, 1fr);
+  row-gap: 8px;
+  padding-bottom: 8px;
+}
+.content.is-narrow .chan-head-right {
+  grid-column: 1 / -1;
+  justify-content: flex-start;
+  margin-left: 0;
+  padding-left: calc(var(--brand-box) + var(--card-icon-gap));
+  flex-wrap: wrap;
+}
+.content.is-narrow .chan-accs {
+  padding-left: var(--inset-card);
+}
+/* 窄窗：右侧那一组整组折到名字下面，左边缘对齐名字那一列。
+   逐格拆开会让「退出」掉进 8px 的圆点格，而那里连字都放不下。 */
+.content.is-narrow .chan-acc {
+  grid-template-columns: 8px minmax(0, 1fr);
+  row-gap: 6px;
+}
+.content.is-narrow .chan-acc-side {
+  grid-column: 2;
+  justify-self: start;
+  margin-top: 2px;
+}
+.content.is-narrow .chan-acc .chan-acc-dot { align-self: start; margin-top: 6px; }
+.content.is-narrow .chan-warn { padding-left: var(--inset-card); }
+
+@container channel-card (max-width: 720px) {
+  .chan-head { grid-template-columns: auto minmax(0, 1fr); row-gap: 10px; }
+  .chan-head-right { grid-column: 1 / -1; margin-left: 0; flex-wrap: wrap; }
+  .chan-acc { grid-template-columns: 8px minmax(0, 1fr); row-gap: 8px; }
+  .chan-acc-side { grid-column: 2; justify-self: stretch; justify-content: space-between; }
+  .chan-acc-dot { align-self: start; margin-top: 6px; }
+}
+
+/* 登录 / 贴 Key 的对话框：一格字段一行「标签 + 控件 + 一句去哪抄」。
+   对话框里没有第二处能放解释，格子自己得把话说全。 */
+.chan-form { display: flex; flex-direction: column; gap: 12px; }
+/* 对话框里那段「这一步要你做什么」是正文，不是注脚：12px 的说明在一屏三行的
+   指令里读起来像免责声明，用户会跳过它直接去找按钮。给它 13px / 19px。 */
+.chan-form-lead {
+  font-size: 13px;
+  line-height: 19px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+/* 提示文字用二级色而不是三级色：三级色在浅底上只有 3.2:1，而这一格里
+   写的是「去哪抄这个字段」—— 它是必须读懂的指令，不是注脚。 */
+.chan-form-hint {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.chan-field { display: flex; flex-direction: column; gap: 4px; }
+.chan-field-label {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+}
+.chan-field .text-box { width: 100%; }
+.chan-field-hint {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+/* 设备码与授权 URL 都是要抄走的东西：等宽、可整段选中、不折在中间 */
+.chan-code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-subtitle);
+  line-height: 24px;
+  letter-spacing: 0.06em;
+  padding: 8px 12px;
+  border-radius: var(--r-control);
+  border: 1px solid var(--card-stroke);
+  background: var(--fill-secondary);
+  color: var(--text-primary);
+  user-select: all;
+}
+.chan-url {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+  user-select: all;
+}
+.chan-qr {
+  width: 168px;
+  height: 168px;
+  align-self: center;
+  border-radius: var(--r-control);
+  border: 1px solid var(--card-stroke);
+  background: #FFFFFF;
+}
+/* 轮询中的那一行带一个呼吸点：它是唯一一处会自己变的字，
+   没有伴随变化时读起来像卡住了。 */
+.chan-status-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+}
+.chan-status-line::before {
+  content: "";
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  animation: chanPulse 1.6s ease-in-out infinite;
+}
+@keyframes chanPulse {
+  0%, 100% { opacity: 0.25; }
+  50% { opacity: 1; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .chan-status-line::before { animation: none; opacity: 0.8; }
+}
+
+/* 虚拟模型卡：卡头一行（名字 + key + 候选数 + 首选 + 折角），展开是候选表。
+   卡头整行可点，所以 hover 反馈落在卡头上，而不是整张卡上。 */
+.card.agg-vm { display: block; padding: 0; }
+.card.agg-vm:hover { background: var(--card-bg-hover); border-color: var(--card-stroke-hover); }
+.agg-vm-header { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; }
+.agg-model-bulk { margin-right: var(--inset-card); min-width: 76px; height: 28px; font-size: var(--fs-caption); box-shadow: none; }
+.agg-vm-head {
+  display: grid;
+  grid-template-columns: minmax(150px, auto) minmax(0, 1fr) auto 16px;
+  align-items: center;
+  column-gap: 14px;
+  min-height: var(--card-min-h);
+  padding: var(--inset-card);
+}
+/* 卡头是按钮，焦点环要贴着它自己那一行，而不是整张卡的外框 */
+.card.agg-vm .agg-vm-head:focus-visible {
+  outline: 2px solid var(--text-primary);
+  outline-offset: -2px;
+  border-radius: var(--r-card);
+}
+
+/* 卡头那条小链：名字 → 第1站 → 第2站 …。收起状态就该回答"这个模型有几条退路"，
+   所以它不放进展开区。节点用实心点（和展开后链条上的圆点同一种语法）。 */
+.agg-hops {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.agg-hop {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+}
+.agg-hop.is-first { color: var(--text-primary); font-weight: var(--fw-semi); }
+.agg-hop-dot {
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+  flex: none;
+}
+.agg-hop.is-first .agg-hop-dot { width: 7px; height: 7px; }
+.agg-hop-arrow {
+  width: 12px; height: 12px;
+  display: grid; place-items: center;
+  color: var(--text-tertiary);
+  flex: none;
+}
+.agg-hop-arrow svg { width: 12px; height: 12px; }
+.agg-hop.is-none {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--warn-fg);
+}
+/* 窄窗：小链换到第二行，名字保住整行 */
+.content.is-narrow .agg-vm-head {
+  grid-template-columns: minmax(0, 1fr) auto 16px;
+  row-gap: 6px;
+}
+.content.is-narrow .agg-hops { grid-column: 1 / -1; order: 3; }
+.content.is-narrow .agg-vm-meta { order: 2; justify-content: flex-start; }
+.agg-vm-id { min-width: 0; display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.agg-vm-name {
+  font-size: var(--fs-body);
+  line-height: 20px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+/* 规范名旁边挂真实 key：两者常常只差一个分隔符，读的人要能一眼看出这条是
+   怎么归过来的，所以用等宽字体把它和展示名分开，而不是同一行同款字。 */
+.agg-vm-key {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  /* 规范名和真实 key 常常只差一个分隔符，读的人要靠它核对"这条是怎么归过来
+     的"——所以它用二级色，不是三级：三级色在浅底上 3.3:1，读不动就等于没有。 */
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.agg-vm-meta { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.agg-caret {
+  width: 16px; height: 16px;
+  display: grid; place-items: center;
+  color: var(--text-secondary);
+  transition: transform var(--dur-expand) var(--ease-std);
+}
+.agg-caret svg { width: 16px; height: 16px; }
+.agg-caret.is-open { transform: rotate(180deg); }
+
+/* 备用链：这一面真正要讲的东西。一条候选不是表格里的一行，而是链条上的一站，
+   所以它带位次、带一根往下的连线，连线上写着"不行就换下一站"。
+   位次轴（01/02/03…）与烧掉顺序那一组共用同一套等宽数字，两处竖着读是同一条线。 */
+.agg-chain {
+  border-top: 1px solid var(--card-stroke);
+  padding: 10px var(--inset-card) 14px;
+}
+.agg-chain-head {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding-bottom: 8px;
+}
+.agg-chain-title {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+}
+.agg-chain-sub {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+}
+
+/* 一站：名次（22px 轴）· 竖连线 · 内容。连线上下贯通到相邻两站，
+   所以它读起来是"一列往下走"，而不是每行各画一小段。 */
+.agg-step { position: relative; }
+.agg-step-line {
+  display: grid;
+  grid-template-columns: 22px 14px minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0;
+  min-height: 44px;
+  padding: 4px 0;
+}
+.agg-step-no {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  line-height: 16px;
+  text-align: right;
+  color: var(--text-secondary);
+}
+.agg-step-rail {
+  position: relative;
+  align-self: stretch;
+  display: block;
+}
+.agg-step-rail::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  margin-left: -0.5px;
+  background: var(--card-stroke);
+}
+/* 首尾两站把竖线收进圆点：链是有头有尾的，不是一段无限的线 */
+.agg-step:first-child .agg-step-rail::before { top: 50%; }
+.agg-step.is-last .agg-step-rail::before { bottom: 50%; }
+.agg-step-rail::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  margin: -3.5px 0 0 -3.5px;
+  border-radius: 50%;
+  background: var(--card-bg);
+  border: 1px solid var(--text-secondary);
+}
+/* 在链上的站用实心点，撤下的站用空心点：一眼看出这条链哪一段是通的 */
+.agg-step:not(.is-off) .agg-step-rail::after { background: var(--accent); border-color: var(--accent); }
+/* 位次不按状态改色：它标的是"第几站"，不是"这站能不能用"。撤下的那一站
+   靠空心圆点和「不在链上」两处非颜色的差别表达——重要的状态不能只靠颜色区分，
+   而位次一变色，竖着数的轴就先断了。 */
+
+.agg-step-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 14px;
+  min-width: 0;
+}
+.agg-step-main {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  column-gap: 0;
+  min-width: 0;
+}
+/* 这一站自己的标小一号（26）：链条上一眼要认出"这是哪一家"，
+   但它不是主角——主角是"第几站"。 */
+.agg-step-main .card-brand { width: 26px; height: 26px; margin-right: 10px; }
+.agg-step-main .brand-mono { font-size: 12px; }
+.agg-step-id { min-width: 0; display: flex; flex-direction: column; gap: 1px; }
+.agg-step-name {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-size: var(--fs-caption);
+  line-height: 17px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+}
+/* 真实 id 用等宽字体：核查合并对不对，靠的就是这一列逐字比对 */
+.agg-step-real {
+  font-family: var(--font-mono);
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+}
+.agg-step-side {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;
+  flex: none;
+}
+.agg-step-price {
+  min-width: 42px;
+  max-width: 190px;
+  white-space: normal;
+  text-align: right;
+  font-size: var(--fs-caption);
+  font-variant-numeric: tabular-nums;
+  color: var(--text-primary);
+}
+
+.agg-catalog-pager { grid-column: 1 / -1; display: flex; align-items: center; justify-content: flex-end; gap: 12px; font-size: var(--fs-caption); color: var(--text-secondary); }
+.agg-catalog-results { grid-column: 1 / -1; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+/* 撤下的站整行退一档，但真实 id 不退到三级色——那是核查凭据，读不动等于没有 */
+.agg-step.is-off .agg-step-name { color: var(--text-secondary); }
+.agg-step.is-off .agg-step-real { color: var(--text-secondary); }
+.agg-step.is-off .agg-step-price { color: var(--text-secondary); }
+
+/* 站之间的连线：把"不行就换下一站"写在线旁边（不是装饰性箭头）。
+   它缩进到与内容列同一个左边缘，读起来是"这一步之后接着做什么"。 */
+.agg-step-elbow {
+  display: grid;
+  grid-template-columns: 22px 14px minmax(0, 1fr);
+  align-items: center;
+  min-height: 18px;
+}
+/* 连线必须真的连起来：这一步的线从上一站的圆点一直走到下一站的圆点，
+   否则"换下一站"就只是一句备注视文，没有画出"往下走"这件事。 */
+.agg-step-elbow-line {
+  grid-column: 2;
+  position: relative;
+  align-self: stretch;
+}
+.agg-step-elbow-line::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  margin-left: -0.5px;
+  background: var(--card-stroke);
+}
+/* 箭头落在线上：它是"这一段是换站的方向"，而不是装饰符号 */
+.agg-step-elbow-line::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 5px;
+  height: 5px;
+  margin: -3.5px 0 0 -3px;
+  border-right: 1px solid var(--text-tertiary);
+  border-bottom: 1px solid var(--text-tertiary);
+  transform: rotate(45deg);
+}
+.agg-step-elbow-text {
+  grid-column: 3;
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  /* 二级色：这句是这一面的核心规则（"上一站不行才走下一站"），不是脚注 */
+  color: var(--text-secondary);
+}
+
+/* 窄窗（内容区 < 590）：右侧那组（倍率 / 到期 / 开关）换到第二行，
+   真实 id 保住整行宽度——它一断行就认不出是哪一条。 */
+.content.is-narrow .agg-step-body {
+  grid-template-columns: minmax(0, 1fr);
+  row-gap: 6px;
+}
+.content.is-narrow .agg-step-side {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  padding-left: calc(26px + 10px);
+}
+.content.is-narrow .agg-turn {
+  grid-template-columns: 22px auto minmax(0, 1fr);
+  row-gap: 6px;
+}
+.content.is-narrow .agg-turn-right {
+  grid-column: 1 / -1;
+  margin-left: 0;
+  padding-left: 0;
+  justify-content: space-between;
+}
+
+/* ============================ 开关 ToggleSwitch ============================ */
+.toggle {
+  position: relative;
+  width: 40px; height: 20px;         /* ToggleSwitch 轨道 40×20 */
+  flex: none;
+  border-radius: 10px;
+  border: 1px solid var(--stroke-control-strong);
+  background: var(--fill-control);
+  transition: background-color var(--dur-fast) linear, border-color var(--dur-fast) linear;
+}
+.toggle:hover { border-color: var(--text-tertiary); }
+.toggle[aria-checked="true"] {
+  background: var(--accent);
+  border-color: var(--accent);
+}
+.toggle:active { transform: none; }
+.toggle:disabled { opacity: 0.45; pointer-events: none; }
+.toggle:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 2px; }
+
+.toggle-thumb {
+  position: absolute;
+  top: 2px; left: 2px;
+  width: 14px; height: 14px;
+  border-radius: 7px;
+  background: var(--text-primary);
+  transition: left var(--dur-fast) linear, width var(--dur-fast) linear, height var(--dur-fast) linear;
+}
+.toggle[aria-checked="true"] .toggle-thumb { left: 22px; background: var(--on-accent); }
+/* hover 时拇指缩小（WinUI 的 ToggleSwitchThumb 视觉反馈） */
+.toggle:hover .toggle-thumb { width: 14px; height: 14px; }
+.toggle:active .toggle-thumb { width: 17px; height: 14px; border-radius: 7px; }
+.toggle:active[aria-checked="true"] .toggle-thumb { left: 19px; }
+
+/* ============================ 按钮 Button ============================ */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 32px;
+  padding: 0 12px;
+  border-radius: var(--r-control);
+  border: 1px solid var(--stroke-control);
+  background: var(--fill-control);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  white-space: nowrap;
+  flex: none;
+  transition: background-color var(--dur-fast) linear, border-color var(--dur-fast) linear;
+}
+.btn:hover { background: var(--fill-secondary); border-color: var(--card-stroke-hover); }
+.btn:active {
+  background: var(--fill-tertiary);
+  border-color: var(--stroke-control);
+  color: var(--text-secondary);
+}
+.btn svg { width: 16px; height: 16px; flex: 0 0 auto; }
+
+.btn.v-accent { background: var(--accent); border-color: var(--accent); color: var(--on-accent); }
+.btn.v-accent:hover { background: var(--accent-hover); border-color: var(--accent-hover); }
+.btn.v-accent:active { background: var(--accent-pressed); border-color: var(--accent-pressed); color: var(--on-accent); }
+
+.btn.v-subtle { background: transparent; border-color: transparent; }
+.btn.v-subtle:hover { background: var(--fill-subtle-hover); border-color: transparent; }
+.btn.v-subtle:active { background: var(--fill-subtle-pressed); border-color: transparent; }
+
+.btn.v-critical { background: var(--critical); border-color: var(--critical); color: var(--on-critical); }
+.btn.v-critical:hover { background: var(--critical-hover); border-color: var(--critical-hover); }
+.btn.v-critical:active { background: var(--critical-hover); color: var(--on-critical); }
+
+.btn.is-icon-only { width: 32px; padding: 0; }
+.btn.is-square-36 { width: 36px; height: 36px; min-height: 36px; padding: 0; border: 0; background: transparent; }
+.btn.is-square-36:hover { background: var(--fill-subtle-hover); }
+.btn:disabled { color: var(--text-disabled); pointer-events: none; }
+
+/* ============================ 键帽 / 快捷键 ============================ */
+.keycap {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 32px;
+  height: 32px;
+  padding: 0 8px;
+  border-radius: 4px;
+  border: 1px solid var(--stroke-control);
+  background: var(--fill-control);
+  color: var(--text-primary);
+  font-family: var(--font-ui);
+  font-size: var(--fs-body);
+  white-space: nowrap;
+}
+.keycap.v-small { min-width: 40px; min-height: 36px; padding: 0 12px 2px 12px; font-size: 14px; }
+.keycap.v-small-outline { background: transparent; }
+.keycap.is-error {
+  border: 2px solid currentColor;    /* 错误态描边 2px */
+  color: var(--critical-text);
+}
+
+.shortcut-keys { display: inline-flex; align-items: center; gap: 4px; }
+.shortcut-inline {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 2px;
+  border-radius: var(--r-control);
+  border: 1px solid transparent;
+  background: transparent;
+}
+.shortcut-inline:hover { background: var(--fill-subtle-hover); }
+.shortcut-inline:hover .shortcut-keys .keycap { background: var(--accent-hover); }
+.shortcut-inline:hover .shortcut-keys .keycap { color: var(--on-accent); }
+.shortcut-edit {
+  width: 28px; height: 28px;
+  display: grid; place-items: center;
+  border-radius: var(--r-control);
+  color: var(--text-secondary);
+  flex: none;
+}
+.shortcut-edit:hover { background: var(--fill-subtle-hover); color: var(--text-primary); }
+.shortcut-edit svg { width: 16px; height: 16px; }
+
+/* ============================ 下拉 ComboBox ============================ */
+.combo { position: relative; display: inline-block; flex: none; }
+.combo-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 160px;
+  max-width: 260px;
+  min-height: 32px;
+  padding: 0 8px 0 11px;
+  border-radius: var(--r-control);
+  border: 1px solid var(--stroke-control-strong);
+  background: var(--fill-control);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  transition: background-color var(--dur-fast) linear;
+}
+.combo-btn:hover { background: var(--fill-secondary); }
+.combo-btn:active { background: var(--fill-tertiary); color: var(--text-secondary); }
+.combo-btn .combo-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: left; }
+.combo-btn .combo-chev {
+  width: 12px; height: 12px;
+  color: var(--text-secondary);
+  flex: none;
+  display: grid; place-items: center;
+}
+.combo-btn .combo-chev svg { width: 12px; height: 12px; }
+
+/* ============================ 数字框 NumberBox ============================ */
+.numbox {
+  display: inline-flex;
+  align-items: center;
+  min-height: 32px;
+  border-radius: var(--r-control);
+  border: 1px solid var(--stroke-control-strong);
+  background: var(--fill-control);
+  overflow: hidden;
+  flex: none;
+}
+.numbox input {
+  width: 80px;
+  height: 30px;
+  padding: 0 8px;
+  border: 0;
+  background: none;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+.numbox input:focus { outline: none; }
+.numbox .unit { padding-right: 8px; font-size: var(--fs-caption); color: var(--text-secondary); }
+.numbox:focus-within { border-color: var(--accent); }
+.numbox .spin { display: flex; flex-direction: column; }
+
+/* ============================ 滑块 Slider ============================ */
+.slider { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 160px; }
+.slider-track {
+  position: relative;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 100px;
+}
+.slider-rail {
+  position: absolute;
+  left: 0; right: 0;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--fill-secondary);
+  border: 1px solid var(--stroke-control);
+  overflow: hidden;
+}
+.slider-fill {
+  position: absolute;
+  left: 0; top: 0; bottom: 0;
+  border-radius: 2px;
+  background: var(--accent);
+}
+.slider-thumb {
+  position: absolute;
+  top: 50%;
+  width: 20px; height: 20px;
+  margin-left: -10px;
+  transform: translateY(-50%);
+  border-radius: 50%;
+  background: var(--form-thumb, var(--fill-control));
+  border: 1px solid var(--stroke-control-strong);
+  pointer-events: none;
+}
+.slider-thumb::after {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border-radius: 50%;
+  background: var(--text-primary);
+}
+.slider:hover .slider-thumb { box-shadow: 0 0 0 4px var(--accent-soft); }
+.slider input[type="range"] { position: absolute; inset: 0; opacity: 0; width: 100%; height: 100%; cursor: default; }
+.slider-value {
+  font-size: var(--fs-caption);
+  color: var(--text-secondary);
+  min-width: 44px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex: none;
+}
+
+/* ============================ InfoBar ============================ */
+.infobar {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  border: 1px solid var(--card-stroke);
+  border-radius: var(--r-card);
+  background: var(--card-bg);
+  padding: 0;
+  margin-bottom: 12px;
+  color: var(--text-primary);
+}
+.infobar .ib-icon {
+  flex: 0 0 auto;
+  display: grid;
+  place-items: center;
+  width: 16px; height: 16px;
+  margin: 14px 0 14px 16px;
+  color: var(--info-fg);
+}
+.infobar .ib-icon svg { width: 16px; height: 16px; }
+.infobar .ib-main { flex: 1; padding: 14px 0 14px 12px; min-width: 0; }
+.infobar .ib-title { font-size: var(--fs-body); line-height: 20px; overflow-wrap: anywhere; }
+.infobar .ib-msg { font-size: var(--fs-caption); line-height: 16px; margin-top: 4px; opacity: 0.9; }
+.infobar .ib-actions { display: flex; align-items: center; gap: 8px; margin-left: 12px; align-self: center; }
+.infobar .ib-close {
+  width: 32px; height: 32px;
+  display: grid; place-items: center;
+  align-self: center;
+  margin: 0 8px 0 4px;
+  border-radius: var(--r-control);
+  color: var(--text-secondary);
+}
+.infobar .ib-close:hover { background: var(--fill-subtle-hover); color: var(--text-primary); }
+.infobar .ib-close svg { width: 12px; height: 12px; }
+
+/* 钉住的条：内容窗是可滚动的（.content overflow-y:auto），而条挂在它里面的
+   .page-body 最前面 —— 用户滚到第 20 张卡时，条在 2300px 之上，报错就"点了没反应"。
+   sticky 让它在任何滚动位置都留在哨口顶部；z-index 压住卡片的 hover 阴影。
+   技巧：.content 不是定位元素，所以 sticky 的包含块就是滚动窗口本身。 */
+.infobar.is-pinned {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+}
+
+/* 四种严重度换色（背景 = InfoBar 官方深浅色） */
+.infobar.v-info { background: var(--info-bg); border-color: transparent; color: var(--info-fg); }
+.infobar.v-info .ib-title { color: var(--info-fg); }
+.infobar.v-warn { background: var(--warn-bg); border-color: transparent; color: var(--warn-fg); }
+.infobar.v-warn .ib-title { color: var(--warn-fg); }
+.infobar.v-error { background: var(--error-bg); border-color: transparent; color: var(--error-fg); }
+.infobar.v-error .ib-title { color: var(--error-fg); }
+.infobar.v-success { background: var(--success-bg); border-color: transparent; color: var(--success-fg); }
+.infobar.v-success .ib-title { color: var(--success-fg); }
+.infobar.v-warn .ib-msg, .infobar.v-error .ib-msg,
+.infobar.v-success .ib-msg, .infobar.v-info .ib-msg { color: var(--text-secondary); }
+.infobar .ib-actions .btn { color: inherit; border-color: currentColor; background: transparent; }
+.infobar .ib-actions .btn:hover { background: rgba(255, 255, 255, 0.18); }
+
+/* ============================ 进度环 ============================ */
+.ring { display: inline-grid; place-items: center; color: var(--accent); flex: none; }
+.ring svg { animation: ringSpin 1.6s linear infinite; }
+@keyframes ringSpin { to { transform: rotate(360deg); } }
+.ring.is-idle svg { animation: none; }
+
+/* ============================ 浮层 / 菜单 / 对话框 ============================ */
+/* 浮层一律用实底：卡片色是 0.70 的半透明，贴着地面看没问题，可它一旦被抬到
+   别的文字上方，背后的正文就会透过来 —— 对话框里的标签和卡片标题叠在一起，
+   读者分不清哪一行是自己的输入框。 */
+.flyout, .menu, .dialog {
+  background: var(--surface-solid);
+  border: 1px solid var(--card-stroke);
+  border-radius: var(--r-flyout);
+  box-shadow: var(--shadow-flyout);
+}
+.flyout { position: fixed; z-index: 70; }
+.flyout[hidden] { display: none; }
+@keyframes flyoutIn {
+  from { opacity: 0; transform: translateY(-2px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.menu { min-width: 200px; padding: 2px; }
+.menu-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  border-radius: var(--r-control);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  white-space: nowrap;
+  text-align: left;
+}
+.menu-item:hover { background: var(--fill-subtle-hover); }
+.menu-item:active { background: var(--fill-subtle-pressed); }
+.menu-item.is-danger { color: var(--critical-text); }
+.menu-item.is-danger:hover { background: var(--error-bg); }
+.menu-item .mi-icon { width: 16px; height: 16px; flex: 0 0 16px; display: grid; place-items: center; }
+.menu-item .mi-icon svg { width: 16px; height: 16px; }
+.menu-item.is-checked .mi-icon { color: var(--accent); }
+.menu-item.is-disabled { opacity: 0.36; pointer-events: none; }
+.menu-item .mi-label { flex: 1; overflow: hidden; text-overflow: ellipsis; }
+.menu-item .mi-shortcut { font-size: var(--fs-caption); color: var(--text-secondary); flex: none; }
+.menu-sep { height: 1px; margin: 4px 8px; background: var(--divider); }
+
+.dialog {
+  position: fixed;
+  top: 50%; left: 50%;
+  transform: translate(-50%, -50%);
+  width: 498px;
+  max-width: 92vw;
+  z-index: 90;
+  padding: 24px;
+}
+.dialog-title { font-size: var(--fs-title); font-weight: var(--fw-semi); color: var(--text-primary); margin-bottom: 16px; }
+.dialog-scrim { position: fixed; inset: 0; background: var(--overlay); z-index: 80; animation: fadeIn var(--dur-base) linear; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.dialog-content { display: flex; flex-direction: column; gap: 8px; }
+.dialog-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 24px; }
+
+/* ============================ 列表 ListView ============================ */
+.lv { display: flex; flex-direction: column; gap: 2px; }
+.lv-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  padding: 6px 11px;
+  border-radius: var(--r-control);
+  border: 1px solid transparent;
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+}
+.lv-item:hover { background: var(--fill-subtle-hover); }
+.lv-item.is-selected { background: var(--fill-subtle-hover); }
+.lv-item.is-selected::before {
+  content: "";
+  width: 3px; height: 16px;
+  border-radius: 2px;
+  background: var(--accent);
+  flex: none;
+}
+.lv-item.is-dragging { opacity: 0.4; }
+.lv-empty { padding: 16px; font-size: var(--fs-caption); color: var(--text-secondary); }
+.lv-drop-line { height: 2px; background: var(--accent); margin: 1px 0; border-radius: 1px; }
+.lv-item-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--fs-body);
+}
+.lv-grip {
+  width: 16px; height: 16px;
+  flex: 0 0 16px;
+  display: grid; place-items: center;
+  color: var(--text-secondary);
+  cursor: grab;
+}
+.lv-grip:active { cursor: grabbing; }
+
+/* ============================ 文本框 TextBox ============================ */
+.text-box {
+  min-height: 32px;
+  padding: 0 11px;
+  border-radius: var(--r-control);
+  border: 1px solid var(--stroke-control-strong);
+  background: var(--fill-control);
+  color: var(--text-primary);
+  font-size: var(--fs-body);
+  min-width: 0;
+}
+.text-box::placeholder { color: var(--text-secondary); }
+.text-box:hover { background: var(--fill-secondary); }
+.text-box:focus { outline: none; border-color: var(--accent); }
+
+/* ============================ 状态药丸 Pill ============================ */
+/* 只用来表达状态（可用/限流/不可用），所以颜色是语义色而非强调色。 */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  min-height: 22px;
+  padding: 1px 9px;
+  border-radius: var(--r-pill);
+  font-size: var(--fs-caption);
+  white-space: nowrap;
+  flex: none;
+  background: var(--fill-secondary);
+  border: 1px solid var(--card-stroke);
+  color: var(--text-secondary);
+}
+.pill.tone-ok { background: var(--success-bg); border-color: transparent; color: var(--success-fg); }
+.pill.tone-warn { background: var(--warn-bg); border-color: transparent; color: var(--warn-fg); }
+.pill.tone-bad { background: var(--error-bg); border-color: transparent; color: var(--error-fg); }
+.pill.tone-mute { background: var(--fill-secondary); border-color: var(--card-stroke); color: var(--text-secondary); }
+
+/* ============================ 标签 Tag ============================ */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 1px 8px;
+  border-radius: var(--r-control);
+  background: var(--fill-secondary);
+  border: 1px solid var(--card-stroke);
+  color: var(--text-secondary);
+  font-size: var(--fs-caption);
+  white-space: nowrap;
+  flex: none;
+}
+
+/* ============================ 关于页 ============================ */
+.about-hero { display: flex; flex-direction: column; gap: 12px; padding-bottom: 8px; }
+.about-identity { display: flex; align-items: center; gap: 20px; }
+.about-identity-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.about-logo {
+  width: 64px; height: 64px;
+  flex: 0 0 64px;
+  display: grid; place-items: center;
+  border-radius: var(--r-card);
+  background: var(--fill-secondary);
+  border: 1px solid var(--card-stroke);
+  color: var(--accent);
+}
+.about-logo svg { width: 32px; height: 32px; }
+.about-name { font-size: var(--fs-hero); line-height: 32px; font-weight: var(--fw-semi); color: var(--text-primary); }
+.about-version { font-size: var(--fs-caption); line-height: 16px; color: var(--text-secondary); }
+.about-hero-actions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; margin-top: 16px; }
+.about-action { display: flex; align-items: center; }
+.about-status { display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.about-checking {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--fs-body);
+  color: var(--text-secondary);
+}
+.about-links { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; }
+.about-links-sep { color: var(--text-disabled); }
+.about-link { font-size: var(--fs-caption); }
+
+
+/* ============================ 网关页：分面标签 ============================ */
+/* 六个面（服务/模型/供应商/联网/Agent/日志）用一个分段控件切换：同一份数据的
+   六个视角，不是六张独立页面，所以不做子导航。 */
+.gw-tabs {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+.gw-tab {
+  min-height: 32px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: var(--r-control);
+  background: transparent;
+  color: var(--text-secondary);
+  font-size: var(--fs-body);
+  white-space: nowrap;
+  transition: background-color var(--dur-fast) linear, color var(--dur-fast) linear;
+}
+.gw-tab { display: inline-flex; align-items: center; gap: 6px; }
+.gw-tab-icon { width: 14px; height: 14px; display: grid; place-items: center; color: var(--text-tertiary); }
+.gw-tab-icon .icon { width: 14px; height: 14px; }
+.gw-tab.is-selected .gw-tab-icon { color: var(--text-primary); }
+.gw-tab:hover { background: var(--fill-subtle-hover); color: var(--text-primary); }
+.gw-tab.is-selected {
+  background: var(--fill-secondary);
+  color: var(--text-primary);
+  font-weight: var(--fw-semi);
+}
+.gw-tab:focus-visible { outline: 2px solid var(--text-primary); outline-offset: 1px; }
+
+/* ============================ 网关页：表单行 ============================ */
+.gw-form { display: flex; flex-direction: column; gap: 12px; padding: 4px 0; }
+.gw-form-row { display: flex; flex-direction: column; gap: 4px; }
+.gw-label { font-size: var(--fs-caption); line-height: 16px; color: var(--text-secondary); }
+/* hint 是一句要读的说明（"还没接入任何供应商""开启后会立刻抓取一次"），
+   不是装饰：tertiary 在浅色底上只有 3.3:1，读起来是灰雾。抬到 secondary。 */
+.gw-hint { font-size: var(--fs-caption); line-height: 17px; color: var(--text-secondary); overflow-wrap: anywhere; }
+.gw-inline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.gw-inline > .text-box { flex: 1 1 220px; min-width: 140px; }
+
+/* ============================ 网关页：预设芯片 ============================ */
+.gw-chips { display: flex; flex-wrap: wrap; gap: 8px; padding: 4px 0; }
+.gw-chip {
+  display: inline-flex; flex-direction: column; align-items: flex-start; gap: 2px;
+  padding: 6px 10px;
+  border-radius: var(--r-control);
+  border: 1px solid var(--card-stroke);
+  background: var(--fill-secondary);
+  color: var(--text-primary);
+  text-align: left;
+  max-width: 260px;
+}
+.gw-chip:hover { background: var(--fill-tertiary); border-color: var(--card-stroke-hover); }
+.gw-chip .chip-name { font-size: var(--fs-caption); font-weight: var(--fw-semi); }
+.gw-chip .chip-note {
+  font-size: 11px; line-height: 14px; color: var(--text-secondary);
+  white-space: normal; overflow-wrap: anywhere;
+}
+
+/* ============================ 网关页：日志查看器 ============================ */
+.gw-log {
+  display: flex; flex-direction: column; gap: 0;
+  border: 1px solid var(--card-stroke);
+  border-radius: var(--r-card);
+  background: var(--card-bg);
+  overflow: hidden;
+  max-height: 420px;
+  overflow-y: auto;
+}
+.gw-log-row {
+  display: grid;
+  grid-template-columns: 132px 56px minmax(0, 1fr);
+  gap: 8px;
+  align-items: baseline;
+  padding: 4px 12px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11.5px;
+  line-height: 16px;
+  border-bottom: 1px solid var(--divider);
+}
+.gw-log-row:last-child { border-bottom: 0; }
+.gw-log-row .log-at { color: var(--text-tertiary); white-space: nowrap; }
+.gw-log-row .log-msg { color: var(--text-primary); overflow-wrap: anywhere; white-space: pre-wrap; }
+.gw-log-row.lv-debug .log-msg { color: var(--text-secondary); }
+.gw-log-row.lv-warn .log-msg { color: var(--warn-fg); }
+.gw-log-row.lv-error .log-msg { color: var(--error-fg); }
+.gw-log-row .log-cat {
+  display: inline-block; padding: 0 5px; border-radius: 2px;
+  background: var(--fill-secondary); border: 1px solid var(--card-stroke);
+  color: var(--text-secondary);
+  font-size: 10.5px; line-height: 15px; text-align: center;
+}
+.gw-log-empty { padding: 16px; font-size: var(--fs-caption); color: var(--text-secondary); }
+
+/* 日志正文和筛选表单都是"一整块信息"，在卡片网格里必须占满整行 */
+.gw-log,
+.gw-block { grid-column: 1 / -1; }
+.gw-block { display: block; padding: 16px; }
+
+
+/* ============================ 公告 ============================
+   一条公告是一段要读完的话，不是"一个开关"。半格里 200px 的说明列会把一段
+   三百字的话折成二十行（实测原样：v1.10.0 那条在 1440 宽的窗口里排成一列
+   竖排字），所以它整行铺开。
+
+   三条公告是**一块内容**，不是三张互相独立的卡：整组落在一个带描边的面板里，
+   行与行之间用分隔线切开 —— 这样标题、胶囊、日期在同一条竖线上对得齐，眼睛
+   顺着一条线往下读。原来三条各自是圆角卡、彼此留 8px 空隙、左边还各挂一条
+   彩色竖线，读起来像三个不相干的通知，而实际它们是同一批公告。
+
+   醒目不靠彩色边条喊：未读的那条整行抬一档底色 + 标题前面一个实心圆点，
+   level 由右侧胶囊说明（说明 / 注意 / 严重）。 */
+/* 兼容端点：一张地址表。名字一列定宽，地址占满中间（等宽字体、不折行、
+   过长时省略号），复制按钮靠右。四条端点的按钮落在同一条竖线上。 */
+.ep-list {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--card-stroke);
+  border-radius: var(--r-card);
+  background: var(--card-bg);
+  overflow: hidden;
+}
+.ep-row {
+  display: grid;
+  grid-template-columns: 150px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 12px 7px 16px;
+  border-bottom: 1px solid var(--divider);
+}
+.ep-row:last-child { border-bottom: 0; }
+.ep-name {
+  font-size: var(--fs-body);
+  line-height: 20px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+}
+.ep-url {
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 20px;
+  color: var(--text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+/* 窄窗口里名字列不再定宽：定宽 150px 会把地址挤出可视区。 */
+@media (max-width: 760px) {
+  .ep-row { grid-template-columns: minmax(0, 1fr) auto; }
+  .ep-name { grid-column: 1 / -1; }
+}
+
+/* 公告自己的横杆：这一组没有 Group 头，横杆就是头。标题 + 两个计数在左，
+   「拉取公告」靠右；横杆底下一条分隔线，读的人一眼能看出"公告从这条线开始"，
+  而不是四条信息挤成一排飘在灰底上（原来 .ann-bar 没有任何样式，四个子元素
+  贴着默认 inline 排下来，间距全靠浏览器默认，按钮也没被推到右边）。 */
+.ann-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding: 0 2px 8px;
+  border-bottom: 1px solid var(--divider);
+}
+.ann-bar-title {
+  font-size: var(--fs-body);
+  line-height: 22px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+}
+.ann-bar .ann-gap { flex: 1 1 auto; }
+/* 横杆下面直接接清单：原来 Group 的 8px 间距之外还要再垫一层，第一条公告被
+   推到半屏以外。 */
+.ann-list + .ann-list { margin-top: 0; }
+.ann-list {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--card-stroke);
+  border-radius: var(--r-card);
+  background: var(--card-bg);
+  overflow: hidden;
+}
+.ann-item {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid var(--divider);
+}
+.ann-item:last-child { border-bottom: 0; }
+/* 未读只抬底色、不换描边：整组已经是一个面板，行再各描一圈边框就散了。
+   底色差异 + 圆点 + 标题一级色，这三样并起来已经足够"这条还没读"。 */
+.ann-item.is-unread { background: var(--card-bg-hover); }
+.ann-item.is-read .ann-title { color: var(--text-secondary); }
+
+.ann-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+.ann-dot {
+  width: 7px; height: 7px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--accent);
+}
+/* 标题占满剩下的宽度、胶囊被推到最右：三条公告的胶囊都落在同一条竖线上，
+   扫一眼就能比出"哪一条是注意"。 */
+.ann-title {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--fs-body);
+  line-height: 20px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+  overflow-wrap: anywhere;
+}
+.ann-head .pill { margin-left: auto; }
+.ann-body {
+  max-width: 68ch;
+  font-size: 13px;
+  line-height: 20px;
+  color: var(--text-secondary);
+  overflow-wrap: anywhere;
+  white-space: pre-wrap;
+}
+/* 长正文默认收成三行：公告的正文有几百字，全铺开会把下面几条推到两屏之外，
+   而它在列表里的作用是"要不要点详情"，不是"现在读完"。 */
+.ann-body.is-clamped {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+.ann-foot {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 2px;
+}
+.ann-foot .ann-gap { flex: 1 1 auto; }
+.ann-date {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  /* 日期是"这条公告还有多久"，属于要读的事实，不是装饰：tertiary 在浅色底上
+     只有 3.3:1，抬到 secondary。 */
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+/* 地址字段占一格：两条并排时输入框同宽同高，第三行左对齐落在同一列。
+   半格里必须块布局（标题与说明在上，输入框独占下面一行），否则说明列只剩
+   一百多像素。 */
+.gw-field-card {
+  display: block;
+  padding: var(--inset-card);
+  min-height: 0;
+}
+.gw-field-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+}
+.gw-field-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 10px;
+}
+.gw-field-line .text-box {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-family: var(--font-mono);
+  font-size: 13px;
+}
+.gw-field-head .card-icon { margin-top: 0; }
+
+/* 任务抽屉里的一行阶段 */
+.gw-step {
+  display: grid; grid-template-columns: 96px minmax(0, 1fr) auto;
+  gap: 8px; font-size: var(--fs-caption); line-height: 18px; padding: 2px 0;
+}
+.gw-step .step-name { color: var(--text-primary); }
+.gw-step .step-detail { color: var(--text-secondary); overflow-wrap: anywhere; }
+.gw-step .step-ms { color: var(--text-tertiary); white-space: nowrap; }
+
+/* ============================ 网关页：模型清单 ============================
+   这一面是一张要"一条一条比较"的清单，不是一屏扫一眼的开关墙：
+   先把模型分成「已勾选 / 已取消勾选」两段——上段是真正写进 /v1/models 的
+   那一批，下段是仍在目录里、仍能按 id 点名调用、只是不广播的那一批。两段
+   之间用一条分隔线加一句"会不会广播出去"的说明划开，靠的是位置，不是靠
+   把下段删掉。
+
+   搜索框是常驻装置：它不重画整页，只重填下面那块结果区，所以边打边筛。
+   原来那版把筛选放在 h() 里、onChange 里调 render()，等于每敲一次都要把
+   整个页面 replaceChildren 一遍——光标和还没提交的字符一起丢，因此只能在
+   失焦时提交。 */
+.model-search {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 4px 0 0;
+}
+.model-search-field {
+  /* 定宽而不是铺满：一条 900px 宽的输入框会把这一行写成一条空走廊，
+     而搜索框该是"手边的一件工具"，不是页面的第二条标题栏。 */
+  flex: 0 1 420px;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 34px;
+  padding: 0 10px;
+  border: 1px solid var(--stroke-control-strong);
+  border-radius: var(--r-control);
+  background: var(--fill-control);
+  transition: border-color var(--dur-fast) linear, background-color var(--dur-fast) linear;
+}
+.model-search-field:hover { background: var(--fill-secondary); }
+.model-search-field:focus-within { border-color: var(--accent); background: var(--fill-control); }
+.model-search-icon {
+  width: 14px; height: 14px;
+  flex: none;
+  display: grid; place-items: center;
+  color: var(--text-secondary);
+}
+.model-search-field:focus-within .model-search-icon { color: var(--text-primary); }
+/* 两项一起写：.text-box 自带边框和内边距，单写 .model-search-input 打不过它。 */
+.model-search-input.text-box {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+.model-search-input.text-box:hover { background: transparent; }
+.model-search-input.text-box:focus { border: 0; }
+.model-search-count {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.model-search-count.is-zero { color: var(--warn-fg); }
+
+/* 结果区自己是一张同样的网格：外层 group-body 只有一列有效（这一块整行铺开），
+   卡片仍然要保持"宽了分两栏、窄了回到一列"的节奏。 */
+.model-results {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--card-col-min), 100%), 1fr));
+  gap: var(--card-col-gap);
+  align-items: stretch;
+}
+.model-section {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 4px 8px;
+  padding: 14px 2px 2px;
+  border-top: 1px solid var(--divider);
+  border-radius: var(--r-control);
+}
+/* 第一段不画上边线：它上面是搜索框，那条线会把"筛选"和"清单"切成两块。 */
+.model-results > .model-section:first-child { border-top: 0; padding-top: 2px; }
+.model-section-title {
+  font-size: var(--fs-body);
+  line-height: 20px;
+  font-weight: var(--fw-semi);
+  color: var(--text-primary);
+}
+.model-section-note {
+  font-size: var(--fs-caption);
+  line-height: 16px;
+  color: var(--text-secondary);
+  min-width: 0;
+}
+/* 可折的那一段：整行是按钮，所以给它 hover / 焦点反馈，箭头跟着状态翻。 */
+.model-section.is-foldable { cursor: default; }
+.model-section.is-foldable:hover { background: var(--fill-subtle-hover); }
+.model-section.is-foldable:active { background: var(--fill-subtle-pressed); }
+.model-section-chev {
+  width: 14px; height: 14px;
+  flex: none;
+  display: grid; place-items: center;
+  color: var(--text-secondary);
+}
+.model-section.is-foldable:hover .model-section-chev { color: var(--text-primary); }
+
+/* OpenCode 专用页：账号头、出口、模型状态分区，使用边框而非叠加阴影。 */
+.oc-page { container-type: inline-size; }
+.oc-root > .page-head { flex-wrap:wrap; row-gap:12px; }
+.oc-root .head-actions { min-width:0; }
+@media (max-width:640px) {
+  .oc-root .head-actions { flex-basis:100%; margin-left:0; }
+  .oc-root .head-sub { display:none; }
+}
+.oc-overview { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); gap:12px; }
+.oc-stat { display:flex; flex-direction:column; gap:8px; padding:18px 20px; border:1px solid var(--divider); border-radius:var(--r-card); background:var(--fill-control); }
+.oc-stat > span, .oc-stat small { color:var(--text-secondary); font-size:var(--fs-caption); }
+.oc-stat strong { font-size:28px; font-weight:var(--fw-semi); font-variant-numeric:tabular-nums; }
+.oc-explanation { padding:16px 20px; border-left:3px solid var(--accent); border-radius:var(--r-card); background:var(--fill-secondary); line-height:1.6; }
+.oc-explanation p { margin:5px 0 0; color:var(--text-secondary); font-size:var(--fs-caption); }
+.oc-account-list { display:flex; flex-direction:column; gap:16px; }
+.oc-account { min-width:0; border:1px solid var(--divider); border-radius:8px; background:var(--fill-control); overflow:hidden; }
+.oc-account-head { display:flex; align-items:center; gap:12px; padding:18px 20px; flex-wrap:wrap; }
+.oc-identity { flex:1 1 180px; min-width:0; }
+.oc-name { font-weight:var(--fw-semi); overflow-wrap:anywhere; }
+.oc-account-id { margin-top:5px; font-size:var(--fs-caption); color:var(--text-secondary); font-family:Consolas,monospace; overflow-wrap:anywhere; user-select:text; }
+.oc-actions { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.oc-proxy-row { display:flex; align-items:center; justify-content:space-between; gap:12px; flex-wrap:wrap; padding:16px 20px; border-top:1px solid var(--divider); background:var(--fill-secondary); }
+.oc-proxy-copy { min-width:0; flex:1 1 200px; }
+.oc-proxy-copy strong { font-size:var(--fs-caption); font-weight:var(--fw-semi); }
+.oc-proxy-label { margin-top:4px; font-family:Consolas,monospace; overflow-wrap:anywhere; }
+.oc-state-list { padding:16px 20px; border-top:1px solid var(--divider); }
+.oc-state-summary { color:var(--text-secondary); font-size:var(--fs-caption); line-height:1.6; }
+.oc-model-state { display:flex; align-items:center; flex-wrap:wrap; gap:8px 12px; padding:10px 0; border-bottom:1px solid var(--divider); }
+.oc-model-state:last-child { border-bottom:0; padding-bottom:0; }
+.oc-model-id { flex:1 1 180px; min-width:0; font-family:Consolas,monospace; overflow-wrap:anywhere; }
+.oc-model-time { color:var(--text-secondary); font-size:var(--fs-caption); }
+.oc-account-foot { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:12px; padding:16px 20px; border-top:1px solid var(--divider); }
+.oc-probe-controls { display:flex; flex:1 1 350px; min-width:0; align-items:center; gap:8px; flex-wrap:wrap; }
+.oc-probe-controls .combo { flex:1 1 160px; min-width:0; max-width:330px; }
+.oc-probe-controls .combo-btn { width:100%; min-width:0; max-width:none; }
+.oc-probe-hint { flex-basis:100%; font-size:var(--fs-caption); }
+.oc-form { display:flex; flex-direction:column; gap:12px; min-width:0; }
+.oc-form [hidden] { display:none; }
+.oc-form label { display:flex; flex-direction:column; gap:7px; font-size:var(--fs-caption); }
+.oc-form .text-box { width:100%; min-width:0; }
+.oc-form-error { color:var(--error-fg); font-size:var(--fs-caption); }
+@container (max-width:520px) {
+  .oc-overview { gap:8px; }
+  .oc-stat { padding:12px; }
+  .oc-stat small { display:none; }
+  .oc-account-head, .oc-proxy-row, .oc-state-list, .oc-account-foot { padding:14px; }
+  .oc-model-time { flex-basis:100%; }
+}
+
+/* 模型卡固定整行：它是一行长清单加三枚胶囊，半格会把说明压成一条竖柱。 */
+.model-results > .card.is-full,
+.model-results > .card.is-open { grid-column: 1 / -1; }
+
+
+
