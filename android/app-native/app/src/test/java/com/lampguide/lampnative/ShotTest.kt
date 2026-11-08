@@ -63,7 +63,7 @@ class ShotTest {
 
 
 
-    private val out = File("E:/lamp-guide-android/shots/native")
+    private val out = File(System.getProperty("lampguide.shots.dir", "build/outputs/screenshots"))
 
     // ------------------------------------------------------------------ 假数据
 
