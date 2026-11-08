@@ -1,0 +1,6 @@
+# Reviewed: public installed-app OAuth client constant, not a user credential.
+90a54504a7513c0e1ecca3fec297deb18df440ef:gateway/internal/zen/chprov/auth.go:generic-api-key:1121
+# Reviewed: test-secret-key-1234567890 fixtures in unit tests.
+90a54504a7513c0e1ecca3fec297deb18df440ef:gateway/internal/zen/gateway/opencode_test.go:generic-api-key:114
+90a54504a7513c0e1ecca3fec297deb18df440ef:gateway/internal/zen/gateway/opencode_test.go:generic-api-key:115
+90a54504a7513c0e1ecca3fec297deb18df440ef:gateway/internal/zen/gateway/opencode_test.go:generic-api-key:122
