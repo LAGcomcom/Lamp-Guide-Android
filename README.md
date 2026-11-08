@@ -70,6 +70,16 @@ cd Lamp-Guide-Android
 
 SVG 母版为 [`brand/lamp-guide-icon.svg`](brand/lamp-guide-icon.svg)。修改几何与配色后运行 `npm ci`、`npm run icons` 重新生成 Android 资源。
 
+## 支持项目
+
+如果 Lamp Guide 对你有帮助，欢迎自愿赞赏，支持后续开发与维护。
+
+使用微信扫描下方赞赏码，感谢支持。
+
+<p align="center">
+  <img src="docs/assets/wechat-appreciation.jpg" width="280" alt="FFEE 的微信赞赏码">
+</p>
+
 ## 来源与许可
 
 本项目从 [LAGcomcom/Lamp-Guide](https://github.com/LAGcomcom/Lamp-Guide) 的安卓移植工程独立整理，保留网关来源与版权声明。Windows 桌面版继续在原仓库维护，本仓库维护安卓客户端。
